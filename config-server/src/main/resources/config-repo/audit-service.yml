@@ -1,0 +1,18 @@
+app:
+  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-ttl: 86400000
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/audit;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"

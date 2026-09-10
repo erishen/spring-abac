@@ -1,0 +1,133 @@
+# spring-abac — 七服务 + 前端，一条命令起全套。
+#
+# 与 spring-rbac 的 compose 端口块（8761/8888/41xx、前端 3000）完全错开，可并存。
+# 镜像由各服务目录的 Dockerfile 构建（COPY target/*.jar，需先 make build 生成 jar）。
+# 服务间用 compose 服务名互访（eureka-server / abac-service ...），Eureka 注册用服务名。
+
+services:
+  eureka-server:
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
+    image: spring-abac/eureka-server:latest
+    container_name: abac-eureka
+    ports:
+      - "8762:8762"
+    environment:
+      # 容器内主机名即服务名，Eureka 注册地址要让其他容器可达
+      EUREKA_INSTANCE_HOSTNAME: eureka-server
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+
+  config-server:
+    build:
+      context: .
+      dockerfile: config-server/Dockerfile
+    image: spring-abac/config-server:latest
+    container_name: abac-config
+    ports:
+      - "8889:8889"
+    depends_on:
+      - eureka-server
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    image: spring-abac/auth-service:latest
+    container_name: abac-auth
+    ports:
+      - "4111:4111"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: auth-service
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8889
+    depends_on:
+      - eureka-server
+      - config-server
+
+  abac-service:
+    build:
+      context: .
+      dockerfile: abac-service/Dockerfile
+    image: spring-abac/abac-service:latest
+    container_name: abac-pdp
+    ports:
+      - "4112:4112"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: abac-service
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8889
+    depends_on:
+      - eureka-server
+      - config-server
+
+  document-service:
+    build:
+      context: .
+      dockerfile: document-service/Dockerfile
+    image: spring-abac/document-service:latest
+    container_name: abac-document
+    ports:
+      - "4113:4113"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: document-service
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8889
+    depends_on:
+      - eureka-server
+      - config-server
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: audit-service/Dockerfile
+    image: spring-abac/audit-service:latest
+    container_name: abac-audit
+    ports:
+      - "4114:4114"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: audit-service
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8889
+    depends_on:
+      - eureka-server
+      - config-server
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    image: spring-abac/gateway-service:latest
+    container_name: abac-gateway
+    ports:
+      - "4110:4110"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: gateway-service
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8889
+    depends_on:
+      - eureka-server
+      - config-server
+      - auth-service
+      - abac-service
+      - document-service
+      - audit-service
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # 容器内前端经服务名访问网关（不走宿主机端口）
+        BACKEND_URL: http://gateway-service:4110
+    image: spring-abac/web:latest
+    container_name: abac-web
+    ports:
+      - "3001:3000"
+    depends_on:
+      - gateway-service

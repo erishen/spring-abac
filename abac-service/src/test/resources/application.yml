@@ -1,0 +1,18 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: abac-service-test
+  datasource:
+    url: jdbc:h2:mem:abac-test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+app:
+  pip-fail-closed: true

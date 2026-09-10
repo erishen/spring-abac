@@ -1,0 +1,29 @@
+# 编译产物
+target/
+
+# 本地专用环境变量
+.env
+
+# 各服务本地 H2 数据库（含运行时数据，禁止入库）
+data/
+*.db.mv.db
+*.trace.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 前端（Next.js，web/ 下另有自己的 .gitignore）
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Makefile 运行时产物
+logs/
+.pids/
+.serena/
+
+# macOS
+.DS_Store

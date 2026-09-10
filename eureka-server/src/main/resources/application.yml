@@ -1,0 +1,26 @@
+server:
+  port: 8762
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # 自身即注册中心：不向自己注册，也不拉取注册表
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:8762/eureka
+  server:
+    # 关闭自我保护 + 缩短剔除间隔，本地演示时实例下线能更快感知
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 5000
+    # 缩短响应缓存，配合客户端 3s 拉取，加速注册表传播
+    response-cache-update-interval-ms: 3000
+
+logging:
+  level:
+    org.springframework: WARN

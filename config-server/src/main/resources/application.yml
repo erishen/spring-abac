@@ -1,0 +1,17 @@
+server:
+  port: 8889
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config-repo
+
+logging:
+  level:
+    org.springframework: WARN

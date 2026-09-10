@@ -1,0 +1,22 @@
+server:
+  port: 4114
+
+spring:
+  application:
+    name: audit-service
+  config:
+    import: optional:configserver:http://localhost:8889
+
+logging:
+  level:
+    org.springframework: WARN
+    org.hibernate.SQL: OFF
+
+# Eureka 配置必须是顶层 eureka.*，写在 spring.* 下不生效（Spring Cloud 不读 spring.eureka）
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8762/eureka
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1

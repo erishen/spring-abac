@@ -1,0 +1,23 @@
+app:
+  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-ttl: 86400000
+
+# Resilience4j 熔断：保护网关对 PDP(abac /api/decide) 的跨服务调用。
+# PDP 变慢或错误率升高时熔断打开，避免每个请求都卡等，并 fail-closed 拒绝。
+resilience4j:
+  circuitbreaker:
+    instances:
+      abac-decide:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 800ms
+        slowCallRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"

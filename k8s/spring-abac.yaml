@@ -1,0 +1,410 @@
+# spring-abac — k3s / Kubernetes 部署清单（namespace abac-demo）
+#
+# 与 spring-rbac（namespace rbac-demo，端口 8761/8888/41xx）完全隔离，可共存。
+# 镜像不带 registry 前缀 + imagePullPolicy: IfNotPresent —— 用 make k3s-build 构建到
+# 节点本地（OrbStack 下 k3s 直接可见 docker 本地镜像），无需推远端仓库。
+#
+# 部署顺序由 readiness 自然保证：config/eureka 先起，其余服务靠 Eureka 发现彼此。
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: abac-demo
+
+---
+# ---------------- 基础设施 ----------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: abac-demo
+  labels:
+    app: eureka-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eureka-server
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      containers:
+        - name: eureka-server
+          image: spring-abac/eureka-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8762
+          env:
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: eureka-server
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+          resources:
+            requests: { memory: "256Mi", cpu: "100m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server
+  namespace: abac-demo
+spec:
+  selector:
+    app: eureka-server
+  ports:
+    - port: 8762
+      targetPort: 8762
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: abac-demo
+  labels:
+    app: config-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      containers:
+        - name: config-server
+          image: spring-abac/config-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8889
+          resources:
+            requests: { memory: "256Mi", cpu: "100m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+  namespace: abac-demo
+spec:
+  selector:
+    app: config-server
+  ports:
+    - port: 8889
+      targetPort: 8889
+  type: ClusterIP
+
+---
+# ---------------- 业务服务（模板相同的四个） ----------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: abac-demo
+  labels:
+    app: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: spring-abac/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4111
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: auth-service
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8889
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 4111
+      targetPort: 4111
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abac-service
+  namespace: abac-demo
+  labels:
+    app: abac-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abac-service
+  template:
+    metadata:
+      labels:
+        app: abac-service
+    spec:
+      containers:
+        - name: abac-service
+          image: spring-abac/abac-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4112
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: abac-service
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8889
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: abac-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: abac-service
+  ports:
+    - port: 4112
+      targetPort: 4112
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-service
+  namespace: abac-demo
+  labels:
+    app: document-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: document-service
+  template:
+    metadata:
+      labels:
+        app: document-service
+    spec:
+      containers:
+        - name: document-service
+          image: spring-abac/document-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4113
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: document-service
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8889
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: document-service
+  ports:
+    - port: 4113
+      targetPort: 4113
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+  namespace: abac-demo
+  labels:
+    app: audit-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-service
+  template:
+    metadata:
+      labels:
+        app: audit-service
+    spec:
+      containers:
+        - name: audit-service
+          image: spring-abac/audit-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4114
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: audit-service
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8889
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: audit-service
+  ports:
+    - port: 4114
+      targetPort: 4114
+  type: ClusterIP
+
+---
+# ---------------- 网关（唯一入口 / PEP） ----------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: abac-demo
+  labels:
+    app: gateway-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: spring-abac/gateway-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4110
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: gateway-service
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8889
+          livenessProbe:
+            httpGet: { path: /health, port: 4110 }
+            initialDelaySeconds: 45
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 4110 }
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          resources:
+            requests: { memory: "384Mi", cpu: "200m" }
+            limits: { memory: "768Mi", cpu: "1000m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: gateway-service
+  ports:
+    - port: 4110
+      targetPort: 4110
+  type: ClusterIP
+
+---
+# ---------------- 前端（容器内经服务名调网关） ----------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: abac-demo
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: spring-abac/web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          resources:
+            requests: { memory: "256Mi", cpu: "100m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: abac-demo
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP

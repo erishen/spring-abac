@@ -1,0 +1,79 @@
+server:
+  port: 4110
+
+spring:
+  application:
+    name: gateway-service
+  config:
+    import: optional:configserver:http://localhost:8889
+  cloud:
+    gateway:
+      routes:
+        # 同路由下多个谓词是 AND，故「/api/login 或 /api/register」要用单 Path + 逗号（OR 语义）
+        - id: auth-public
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/login,/api/register
+        - id: auth-me
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/me
+        - id: auth-users
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/users,/api/users/**
+        - id: abac-policies
+          uri: lb://abac-service
+          predicates:
+            - Path=/api/policies,/api/policies/**
+        # 裁决/批量裁决接口：只做只读模拟，不落库，故仅需登录（不做策略门禁）
+        - id: abac-decide
+          uri: lb://abac-service
+          predicates:
+            - Path=/api/decide,/api/decide/**
+        - id: document-api
+          uri: lb://document-service
+          predicates:
+            - Path=/api/documents,/api/documents/**
+        - id: audit-api
+          uri: lb://audit-service
+          predicates:
+            # 仅放行 GET：审计写入由网关内部经服务发现直连（带私有头），外部无法伪造
+            - Path=/api/audit,/api/audit/**
+            - Method=GET
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers
+
+logging:
+  level:
+    org.springframework: WARN
+    reactor: WARN
+
+# 本地兜底（config-server 不可用时生效）
+resilience4j:
+  circuitbreaker:
+    instances:
+      abac-decide:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 800ms
+        slowCallRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+# Eureka 配置必须是顶层 eureka.*，写在 spring.* 下不生效（Spring Cloud 不读 spring.eureka）
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8762/eureka
+    registry-fetch-interval-seconds: 3
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1

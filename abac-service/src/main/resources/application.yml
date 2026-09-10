@@ -1,0 +1,26 @@
+server:
+  port: 4112
+
+spring:
+  application:
+    name: abac-service
+  config:
+    import: optional:configserver:http://localhost:8889
+
+# 本地兜底（config-server 不可用时生效），线上值以 config-repo/abac-service.yml 为准
+app:
+  pip-fail-closed: true
+
+logging:
+  level:
+    org.springframework: WARN
+    org.hibernate.SQL: OFF
+
+# Eureka 配置必须是顶层 eureka.*，写在 spring.* 下不生效（Spring Cloud 不读 spring.eureka）
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8762/eureka
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
