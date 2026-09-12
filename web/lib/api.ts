@@ -88,10 +88,6 @@ export const login = (username: string, password: string) =>
 export const register = (body: {
   username: string;
   password: string;
-  department?: string;
-  clearance?: number;
-  region?: string;
-  title?: string;
 }) => api<UserDto>("/api/register", { method: "POST", body });
 
 /** 当前登录者及其主体属性（属性就是 ABAC 的判定输入）。 */

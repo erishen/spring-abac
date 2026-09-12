@@ -6,8 +6,12 @@ public final class AuthDtos {
     private AuthDtos() {
     }
 
-    public record RegisterRequest(String username, String password, String department,
-                                  Integer clearance, String region, String title) {
+    /**
+     * 注册只收账号密码：主体属性是授权依据，不能让用户自报。
+     * 新账号落库为默认低权限（ENG / clearance=1 / CN / engineer），
+     * 后续由管理员在"用户属性"面板调整（USR-60）。
+     */
+    public record RegisterRequest(String username, String password) {
     }
 
     public record LoginRequest(String username, String password) {

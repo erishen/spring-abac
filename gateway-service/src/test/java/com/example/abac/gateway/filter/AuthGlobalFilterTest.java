@@ -36,6 +36,7 @@ class AuthGlobalFilterTest {
     void setUp() {
         filter = new AuthGlobalFilter(
                 "test-secret-for-gateway-tests", 86_400_000L,
+                "dev-only-internal-secret-change-me",
                 WebClient.builder(), CircuitBreakerRegistry.ofDefaults());
     }
 

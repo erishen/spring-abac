@@ -149,7 +149,7 @@ The three options use disjoint ports and can coexist with the spring-rbac compos
 ## Tests
 
 ```bash
-make test          # or mvn test (all modules, 56 cases)
+make test          # or mvn test (all modules, 63 cases)
 ```
 
 | module | cases | coverage |
@@ -157,7 +157,7 @@ make test          # or mvn test (all modules, 56 cases)
 | abac-service | 15 | policy engine: deny-override merge, priority ordering, scope filtering, SpEL sandbox blacklist, expression cache, REVIEW three-state merge, PIP fail-closed |
 | document-service | 23 | row-level filtering (only rows the PDP permits), missing decisions treated as invisible, pagination bounds, object-level checks, fail-closed on PDP unavailability, client parsing and batch mapping |
 | gateway-service | 7 | PEP auth boundary: public routes pass through; /api without or with a forged token → 401 |
-| auth-service | 4 | global exception handling |
+| auth-service | 11 | global exception handling, registration ignores self-reported attributes (default low privilege), attribute updates admin-only (second gate behind USR-60) |
 | risk-service | 3 | trading risk: single large transfer REVIEW, daily accumulation, fail-closed |
 | agent-service | 4 | agent pre-check: external-link allowlist, dangerous commands, session counting, fail-closed |
 
@@ -186,6 +186,26 @@ spring-abac/
 ├── README.md
 └── README.zh.md            # 中文版
 ```
+
+## Privacy & compliance baseline (demo scope)
+
+- **Registration collects no attributes**: subject attributes are the authorization basis and
+  **cannot be self-reported** (otherwise anyone could register with `clearance=5, title=admin`
+  and become an admin). New accounts default to low privilege (ENG / clearance 1 / CN / engineer);
+  elevation is admin-only.
+- **Attribute changes are admin-only**: gateway policy `USR-60` (USER/UPDATE admin-only) is the
+  first gate, and auth-service re-checks the caller's `title == 'admin'` in the business layer as
+  the second — even direct in-network calls cannot tamper with attributes.
+- **JWT attributes are a snapshot**: after an attribute change the target user's old token keeps
+  the old attributes until expiry (default 24h) — re-login applies the new ones. Production would
+  need an attribute version / token blacklist.
+- **Audit write protection**: the gateway → audit `X-Internal-Audit` header value is no longer
+  hard-coded; both sides read `APP_INTERNAL_SECRET` from config (default
+  dev-only-internal-secret-change-me).
+- **Demo data**: username + PBKDF2 password hash + department/clearance/region/title attributes,
+  collected only to demonstrate authorization semantics. A production deployment must add its own
+  privacy policy, consent mechanism and account-deletion endpoints to satisfy local privacy laws
+  (e.g. PIPL in China).
 
 ## Notes
 

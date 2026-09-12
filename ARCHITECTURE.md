@@ -78,6 +78,21 @@ PIP 回源失败时按 `app.pip-fail-closed` 决定：
 PDP 侧也有默认值兜底（直接调 `/api/decide` 不带 environment 时自动生成），
 保证 PDP 可以脱离网关单独测试。
 
+### 属性信任边界（合规红线）
+
+属性是策略的**唯一输入**，所以属性源必须可信，否则整个 ABAC 都是摆设：
+
+- **注册不接收主体属性**：`POST /api/register` 只收账号密码，新账号一律落为默认低权限
+  （ENG / clearance=1 / CN / engineer）。旧版曾允许客户端自报 clearance/title——
+  任何人注册 `clearance=5, title=admin` 即成为最高权限，已修复并加测试防回归。
+- **属性修改仅 admin**：网关层 `USR-60`（USER/UPDATE 仅 admin）做第一道，auth-service
+  业务层再校验调用者 `title == 'admin'` 做第二道——内网直连绕过网关也改不了。
+- **JWT 属性是快照**：属性随登录签发进 token，改库后**旧 token 里的旧属性仍有效直到过期**
+  （默认 24h）。演示口径是"目标用户重新登录生效"；生产需引入属性版本号 / token 黑名单。
+- **内部共享密钥**：网关 → 审计的写入防伪头 `X-Internal-Audit` 不再写死，改用
+  `APP_INTERNAL_SECRET` 环境变量（默认 dev-only-internal-secret-change-me），网关与
+  audit-service 从配置中心取同一个值。
+
 ## 4. 策略模型与求值
 
 ### 策略长什么样
@@ -278,11 +293,11 @@ append-only：只有写入端点（带网关私有头 `X-Internal-Audit`，外�
 | abac-service | 15 | 策略引擎：deny-override / REVIEW 三态合并、优先级、作用域过滤、SpEL 沙箱黑名单、表达式缓存、PIP fail-closed |
 | document-service | 23 | 行级过滤、缺裁决按不可见、分页边界、对象级校验、PDP 不可用 fail-closed、客户端解析与批量映射 |
 | gateway-service | 7 | PEP 认证边界：公开路由放行、/api 无 token / 伪 token 一律 401 |
-| auth-service | 4 | 全局异常处理 |
+| auth-service | 11 | 全局异常处理、注册不接收属性自报（默认低权限）、属性修改仅 admin（USR-60 业务层第二道） |
 | risk-service | 3 | 交易风控：单笔大额 REVIEW、当日累计、fail-closed |
 | agent-service | 4 | Agent 预裁：外链白名单、危险命令、会话计数、fail-closed |
 
-共 56 个用例，`make test` 或 `mvn test` 全量运行。
+共 63 个用例，`make test` 或 `mvn test` 全量运行。
 关键安全链路的回归保护是刻意安排的：**PEP 认证边界（gateway）→ PDP 裁决契约
 （AbacClient）→ 行级过滤（DocumentService）→ fail-closed（PdpUnavailableException）**
 每一环都有测试，改策略语义或接入新域时不至于悄悄破坏安全边界。

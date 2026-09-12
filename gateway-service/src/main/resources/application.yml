@@ -99,3 +99,5 @@ eureka:
 app:
   jwt-secret: "${APP_JWT_SECRET:dev-only-secret-change-me-please}"
   jwt-ttl: 86400000
+  # 网关↔audit 内部共享密钥（审计写入防伪头）；生产用 APP_INTERNAL_SECRET 注入
+  internal-secret: "${APP_INTERNAL_SECRET:dev-only-internal-secret-change-me}"

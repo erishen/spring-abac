@@ -4,10 +4,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
-const DEPARTMENTS = ["ENG", "SALES", "EXEC"];
-const REGIONS = ["CN", "US"];
-const TITLES = ["engineer", "sales", "manager", "admin"];
-
 export default function LoginPage() {
   const { login, register, token, ready } = useAuth();
   const router = useRouter();
@@ -15,11 +11,6 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
-  // 注册时可直接指定主体属性：注册完就能立刻用这份属性去撞策略
-  const [department, setDepartment] = useState("ENG");
-  const [clearance, setClearance] = useState(3);
-  const [region, setRegion] = useState("CN");
-  const [title, setTitle] = useState("engineer");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +26,7 @@ export default function LoginPage() {
       if (mode === "login") {
         await login(username, password);
       } else {
-        await register({ username, password, department, clearance, region, title });
+        await register({ username, password });
       }
       router.replace("/");
     } catch (e: unknown) {
@@ -85,52 +76,11 @@ export default function LoginPage() {
           {mode === "register" && (
             <>
               <div className="hint" style={{ marginTop: 4 }}>
-                ABAC 不看角色看属性：注册时直接指定部门 / 密级 / 地区 / 岗位，
-                登录后的每个请求都会带着这些属性去撞策略。
-              </div>
-              <div className="row">
-                <div className="field">
-                  <label>部门 department</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>密级 clearance（1-5）</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={5}
-                    value={clearance}
-                    onChange={(e) => setClearance(Number(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div className="row">
-                <div className="field">
-                  <label>地区 region</label>
-                  <select value={region} onChange={(e) => setRegion(e.target.value)}>
-                    {REGIONS.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>岗位 title</label>
-                  <select value={title} onChange={(e) => setTitle(e.target.value)}>
-                    {TITLES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                主体属性是授权依据，不允许自报——新账号统一为默认低权限
+                （ENG · clearance 1 · CN · engineer）。
+                <br />
+                需要提权时由管理员在「用户与主体属性」面板调整
+                （仅 admin 可改，改后目标用户重新登录生效）。
               </div>
             </>
           )}

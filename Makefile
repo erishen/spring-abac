@@ -62,7 +62,7 @@ help: ## 显示本帮助
 	@echo ""
 	@echo "  make build     编译打包，生成九个可执行 jar（mvn package -DskipTests）"
 	@echo "  make compile   仅编译（不打包）"
-	@echo "  make test      跑全部单测（六模块 56 个用例）"
+	@echo "  make test      跑全部单测（六模块 63 个用例）"
 	@echo "  make start     后台启动九服务（eureka→config→auth/abac/document/audit/risk/agent/gateway）+ 前端 :3001"
 	@echo "  make dev       重新编译并后台启动（改码后用）"
 	@echo "  make stop      停止全部后台服务（含前端）"

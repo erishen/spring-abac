@@ -4,6 +4,7 @@ import com.example.abac.audit.dto.AuditEvent;
 import com.example.abac.audit.dto.AuditPageDto;
 import com.example.abac.audit.dto.AuditStatsDto;
 import com.example.abac.audit.service.AuditService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,12 +15,14 @@ public class AuditController {
 
     /** 网关内部发射审计事件时携带的私有头；缺失或非法的写入请求一律拒绝，防伪造。 */
     private static final String INTERNAL_HEADER = "X-Internal-Audit";
-    private static final String INTERNAL_VALUE = "gateway";
 
+    private final String internalValue;
     private final AuditService auditService;
 
-    public AuditController(AuditService auditService) {
+    public AuditController(AuditService auditService,
+                           @Value("${app.internal-secret:dev-only-internal-secret-change-me}") String internalSecret) {
         this.auditService = auditService;
+        this.internalValue = internalSecret;
     }
 
     /** 写入审计事件：仅允许网关经服务发现直连调用并携带私有头。 */
@@ -27,7 +30,7 @@ public class AuditController {
     @ResponseStatus(HttpStatus.OK)
     public void append(@RequestHeader(value = INTERNAL_HEADER, required = false) String marker,
                        @RequestBody AuditEvent event) {
-        if (!INTERNAL_VALUE.equals(marker)) {
+        if (!internalValue.equals(marker)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "audit write not allowed");
         }
         auditService.record(event);

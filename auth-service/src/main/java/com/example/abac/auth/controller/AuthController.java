@@ -26,8 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public UserDto register(@RequestBody RegisterRequest req) {
-        return authService.register(req.username(), req.password(), req.department(),
-                req.clearance(), req.region(), req.title());
+        return authService.register(req.username(), req.password());
     }
 
     @PostMapping("/login")
@@ -54,11 +53,16 @@ public class AuthController {
         return authService.listUsers();
     }
 
-    /** 修改主体属性：演示"改属性即改权限"。 */
+    /**
+     * 修改主体属性：只允许 admin（网关 USR-60 + 本服务业务层双校验）。
+     * 属性是授权依据，任何登录用户都改等于没有门禁。
+     */
     @PutMapping("/users/{username}/attributes")
     public UserDto updateAttributes(@PathVariable String username,
+                                    @RequestHeader("Authorization") String authorization,
                                     @RequestBody UpdateAttributesRequest req) {
-        return authService.updateAttributes(username, req);
+        JwtUtil.Claims actor = authService.verify(extractToken(authorization));
+        return authService.updateAttributes(username, actor, req);
     }
 
     private static String str(Object v) {

@@ -1,5 +1,6 @@
 app:
   jwt-secret: "${APP_JWT_SECRET:dev-only-secret-change-me-please}"
+  internal-secret: "${APP_INTERNAL_SECRET:dev-only-internal-secret-change-me}"
   jwt-ttl: 86400000
 
 spring:

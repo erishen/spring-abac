@@ -17,14 +17,7 @@ interface AuthState {
   user: UserInfo | null;
   ready: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (body: {
-    username: string;
-    password: string;
-    department?: string;
-    clearance?: number;
-    region?: string;
-    title?: string;
-  }) => Promise<void>;
+  register: (body: { username: string; password: string }) => Promise<void>;
   logout: () => void;
 }
 

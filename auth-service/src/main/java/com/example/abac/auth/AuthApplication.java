@@ -1,7 +1,9 @@
 package com.example.abac.auth;
 
+import com.example.abac.auth.model.User;
 import com.example.abac.auth.repository.UserRepository;
 import com.example.abac.auth.service.AuthService;
+import com.example.abac.auth.util.PasswordUtil;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,19 +32,29 @@ public class AuthApplication {
     @Bean
     CommandLineRunner seed(UserRepository userRepository, AuthService authService) {
         return args -> {
-            seed(userRepository, authService, "admin", "admin123", "EXEC", 5, "CN", "admin");
-            seed(userRepository, authService, "carol", "carol123", "ENG", 4, "US", "manager");
-            seed(userRepository, authService, "alice", "alice123", "ENG", 3, "CN", "engineer");
-            seed(userRepository, authService, "bob", "bob123", "SALES", 2, "CN", "sales");
+            seed(userRepository, "admin", "admin123", "EXEC", 5, "CN", "admin");
+            seed(userRepository, "carol", "carol123", "ENG", 4, "US", "manager");
+            seed(userRepository, "alice", "alice123", "ENG", 3, "CN", "engineer");
+            seed(userRepository, "bob", "bob123", "SALES", 2, "CN", "sales");
         };
     }
 
-    private void seed(UserRepository repo, AuthService authService, String username, String password,
+    /** 种子账号由系统内部播种（含预置属性），不经过注册接口——注册不接收属性自报。 */
+    private void seed(UserRepository repo, String username, String password,
                       String dept, int clearance, String region, String title) {
-        if (repo.findByUsername(username).isEmpty()) {
-            authService.register(username, password, dept, clearance, region, title);
-            log.info("[auth] seeded {} / {} (dept={} clearance={} region={} title={})",
-                    username, password, dept, clearance, region, title);
+        if (repo.findByUsername(username).isPresent()) {
+            return;
         }
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordHash(PasswordUtil.hash(password));
+        user.setDepartment(dept);
+        user.setClearance(clearance);
+        user.setRegion(region);
+        user.setTitle(title);
+        user.setCreatedAt(System.currentTimeMillis());
+        repo.save(user);
+        log.info("[auth] seeded {} / {} (dept={} clearance={} region={} title={})",
+                username, password, dept, clearance, region, title);
     }
 }

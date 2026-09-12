@@ -146,7 +146,7 @@ make k3s-demo      # 端口转发网关到 41100 后跑演示
 ## 测试
 
 ```bash
-make test          # 或 mvn test（全模块，56 个用例）
+make test          # 或 mvn test（全模块，63 个用例）
 ```
 
 | 模块 | 用例 | 覆盖点 |
@@ -154,7 +154,7 @@ make test          # 或 mvn test（全模块，56 个用例）
 | abac-service | 15 | 策略引擎：deny-override 合并、优先级排序、作用域过滤、SpEL 沙箱黑名单、表达式缓存、REVIEW 三态合并、PIP fail-closed |
 | document-service | 23 | 行级过滤（只放行 PDP 同意的行）、缺裁决按不可见、分页边界、对象级校验、PDP 不可用 fail-closed、PDP 客户端解析与批量映射 |
 | gateway-service | 7 | PEP 认证边界：公开路由放行、/api 无 token / 伪 token 一律 401 |
-| auth-service | 4 | 全局异常处理 |
+| auth-service | 11 | 全局异常处理、注册不接收属性自报（默认低权限）、属性修改仅 admin（USR-60 业务层第二道） |
 | risk-service | 3 | 交易风控：单笔大额 REVIEW、当日累计、fail-closed |
 | agent-service | 4 | Agent 预裁：外链白名单、危险命令、会话计数、fail-closed |
 
@@ -183,6 +183,21 @@ spring-abac/
 ├── README.md
 └── README.zh.md
 ```
+
+## 隐私与合规基线（演示口径）
+
+- **注册不收集属性**：主体属性是授权依据，**不允许自报**（否则任何人注册
+  `clearance=5, title=admin` 直接成为管理员）。新账号默认低权限
+  （ENG / clearance 1 / CN / engineer），提权须 admin 操作。
+- **属性修改仅 admin**：网关策略 `USR-60`（USER/UPDATE 仅 admin）是第一道，
+  auth-service 业务层再校验调用者 `title == 'admin'` 是第二道——内网直连也改不了。
+- **JWT 属性是快照**：改属性后，目标用户旧 token 仍带旧属性直到过期（默认 24h），
+  **重新登录才生效**；生产需引入属性版本号 / token 黑名单。
+- **审计写入防伪**：网关 → 审计的 `X-Internal-Audit` 头不再写死，两侧都读
+  `APP_INTERNAL_SECRET`（默认 dev-only-internal-secret-change-me）。
+- **演示数据**：仅收集用户名 + PBKDF2 密码哈希 + 部门/密级/属地/岗位属性，
+  用于演示授权语义；生产部署需自行补齐隐私政策、告知同意、账号删除等
+  个保法（PIPL）义务。
 
 ## 说明
 

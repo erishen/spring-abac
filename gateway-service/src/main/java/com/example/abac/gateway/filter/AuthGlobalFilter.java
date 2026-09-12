@@ -50,7 +50,6 @@ public class AuthGlobalFilter implements GlobalFilter {
 
     /** 网关内部直连审计服务的私有头，audit-service 据此拒绝外部伪造写入。 */
     private static final String AUDIT_HEADER = "X-Internal-Audit";
-    private static final String AUDIT_HEADER_VALUE = "gateway";
 
     private static final String TRACE_HEADER = "X-Trace-Id";
     private static final String USER_HEADER = "X-User";
@@ -60,6 +59,7 @@ public class AuthGlobalFilter implements GlobalFilter {
     private static final String ATTR_TITLE = "X-Attr-Title";
 
     private final JwtUtil jwtUtil;
+    private final String auditHeaderValue;
     private final WebClient lbWebClient;
     private final CircuitBreaker pdpCircuitBreaker;
 
@@ -69,9 +69,11 @@ public class AuthGlobalFilter implements GlobalFilter {
 
     public AuthGlobalFilter(@Value("${app.jwt-secret}") String secret,
                             @Value("${app.jwt-ttl:86400000}") long ttl,
+                            @Value("${app.internal-secret:dev-only-internal-secret-change-me}") String internalSecret,
                             @Qualifier("lbWebClientBuilder") WebClient.Builder lbWebClientBuilder,
                             CircuitBreakerRegistry circuitBreakerRegistry) {
         this.jwtUtil = new JwtUtil(secret, ttl);
+        this.auditHeaderValue = internalSecret;
         this.lbWebClient = lbWebClientBuilder.build();
         this.pdpCircuitBreaker = circuitBreakerRegistry.circuitBreaker("abac-decide");
     }
@@ -291,7 +293,7 @@ public class AuthGlobalFilter implements GlobalFilter {
             }
             lbWebClient.post()
                     .uri("lb://audit-service/api/audit")
-                    .header(AUDIT_HEADER, AUDIT_HEADER_VALUE)
+                    .header(AUDIT_HEADER, auditHeaderValue)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(body)
                     .retrieve()
