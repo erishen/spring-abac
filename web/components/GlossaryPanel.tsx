@@ -15,9 +15,9 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>维度</th>
-              <th>RBAC（角色）</th>
-              <th>ABAC（属性）</th>
+              <th style={{ width: "10%" }}>维度</th>
+              <th style={{ width: "42%" }}>RBAC（角色）</th>
+              <th style={{ width: "48%" }}>ABAC（属性）</th>
             </tr>
           </thead>
           <tbody>
@@ -202,10 +202,10 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>环节</th>
-              <th>谁在做</th>
-              <th>发生了什么</th>
+              <th style={{ width: "6%" }}>#</th>
+              <th style={{ width: "13%" }}>环节</th>
+              <th style={{ width: "17%" }}>谁在做</th>
+              <th style={{ width: "64%" }}>发生了什么</th>
             </tr>
           </thead>
           <tbody>
@@ -264,11 +264,11 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>策略</th>
-              <th>效果</th>
-              <th>作用域</th>
-              <th>条件（SpEL）</th>
-              <th>优先级</th>
+              <th style={{ width: "8%" }}>策略</th>
+              <th style={{ width: "8%" }}>效果</th>
+              <th style={{ width: "13%" }}>作用域</th>
+              <th style={{ width: "55%" }}>条件（SpEL）</th>
+              <th style={{ width: "8%" }}>优先级</th>
             </tr>
           </thead>
           <tbody>
@@ -333,9 +333,9 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>命名空间</th>
-              <th>含义</th>
-              <th>本项目来源</th>
+              <th style={{ width: "10%" }}>命名空间</th>
+              <th style={{ width: "26%" }}>含义</th>
+              <th style={{ width: "60%" }}>本项目来源</th>
             </tr>
           </thead>
           <tbody>
@@ -367,9 +367,9 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>clearance</th>
-              <th>密级</th>
-              <th>说明</th>
+              <th style={{ width: "8%" }}>clearance</th>
+              <th style={{ width: "16%" }}>密级</th>
+              <th style={{ width: "72%" }}>说明</th>
             </tr>
           </thead>
           <tbody>
@@ -407,9 +407,9 @@ export default function GlossaryPanel() {
         <table className="cust-table">
           <thead>
             <tr>
-              <th>术语</th>
-              <th>全称</th>
-              <th>一句话</th>
+              <th style={{ width: "12%" }}>术语</th>
+              <th style={{ width: "30%" }}>全称</th>
+              <th style={{ width: "54%" }}>一句话</th>
             </tr>
           </thead>
           <tbody>
