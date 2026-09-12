@@ -1,5 +1,5 @@
 app:
-  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-secret: "${APP_JWT_SECRET:dev-only-secret-change-me-please}"
   jwt-ttl: 86400000
   # PIP：资源属性缺失时的兜底策略。
   #   true  = fail-closed（查不到资源属性直接拒绝，安全默认）

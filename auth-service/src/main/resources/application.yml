@@ -29,5 +29,5 @@ eureka:
 # 此时必须能解析 ${app.jwt-secret}，否则 AuthService 启动即退（Exit 1）。
 # 运行时 config-server 提供的同名值优先级更高，会覆盖此处（行为不变）。
 app:
-  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-secret: "${APP_JWT_SECRET:dev-only-secret-change-me-please}"
   jwt-ttl: 86400000

@@ -1,0 +1,7 @@
+# agent-service 集中配置（本地 application.yml 为 optional import 兜底，同名值以本文件为准）
+agent:
+  review-max-pending: 200
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"

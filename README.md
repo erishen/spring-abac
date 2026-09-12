@@ -175,7 +175,8 @@ spring-abac/
 
 ## 说明
 
-这是演示项目：JWT 密钥写死在配置里（`dev-only-secret-change-me-please`），
+这是演示项目：JWT 密钥默认 `dev-only-secret-change-me-please`（仅演示），
+**生产部署设环境变量 `APP_JWT_SECRET` 即可覆盖，无需改代码**；
 数据库用 H2 文件库且 `ddl-auto: create`（每次启动重建）。
 生产化需要换掉这些：**密钥进密钥管理服务、策略进独立存储并加版本与审批、
 PDP 加决策缓存与批量接口、属性源接真实目录服务与业务库**。

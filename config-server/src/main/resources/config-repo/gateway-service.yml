@@ -1,5 +1,5 @@
 app:
-  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-secret: "${APP_JWT_SECRET:dev-only-secret-change-me-please}"
   jwt-ttl: 86400000
 
 # Resilience4j 熔断：保护网关对 PDP(abac /api/decide) 的跨服务调用。
