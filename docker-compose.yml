@@ -132,8 +132,9 @@ services:
     image: spring-abac/web:latest
     container_name: abac-web
     ports:
-      # 宿主机端口可覆盖（spring-rbac 占 3000、本机 3001 可能被别的服务占用）:
+      # 容器内 Next.js 监听 3001（package.json: next start -p 3001，与 spring-rbac 的 3000 错开）。
+      # 宿主机端口可覆盖（本机 3001 可能被别的服务占用）:
       #   WEB_PORT=3011 docker compose up -d
-      - "${WEB_PORT:-3001}:3000"
+      - "${WEB_PORT:-3001}:3001"
     depends_on:
       - gateway-service
