@@ -1,6 +1,5 @@
 package com.example.abac.risk.controller;
 
-import com.example.abac.risk.model.ReviewTask;
 import com.example.abac.risk.model.TradeExecution;
 import com.example.abac.risk.model.TradeRequest;
 import com.example.abac.risk.service.RiskService;

@@ -26,9 +26,11 @@ public class AbacClient {
     }
 
     public Decision decide(Map<String, Object> subject, Map<String, Object> resource, String action) {
+        Map<String, Object> subj = subject == null ? Map.of() : subject;
+        Map<String, Object> res = resource == null ? Map.of() : resource;
         Map<String, Object> body = Map.of(
-                "subject", subject == null ? Map.of() : subject,
-                "resource", resource == null ? Map.of() : resource,
+                "subject", subj,
+                "resource", res,
                 "action", action == null ? "" : action);
         Map<?, ?> raw;
         try {
@@ -51,13 +53,15 @@ public class AbacClient {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> trace = resp.get("trace") instanceof List<?> l
                 ? (List<Map<String, Object>>) l : List.of();
-        log.debug("PDP decide {} {} {} -> {} ({})", subject.get("agentId"),
-                resource.get("type"), action, effect, policyName);
+        log.debug("PDP decide {} {} {} -> {} ({})", subj.get("agentId"),
+                res.get("type"), action, effect, policyName);
         return new Decision(effect, permitted, policyId, policyName, reason, trace);
     }
 
     /** PDP 不可达/异常：一律 fail-closed（宁可拒绝，不可误放行）。 */
     public static class PdpUnavailableException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
         public PdpUnavailableException(String message) {
             super(message);
         }

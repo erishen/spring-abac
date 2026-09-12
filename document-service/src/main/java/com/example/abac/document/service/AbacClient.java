@@ -1,6 +1,5 @@
 package com.example.abac.document.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,8 +23,6 @@ public class AbacClient {
     private static final Logger log = LoggerFactory.getLogger(AbacClient.class);
 
     private final RestTemplate lbRestTemplate;
-    private final ObjectMapper mapper = new ObjectMapper();
-
     public AbacClient(RestTemplate lbRestTemplate) {
         this.lbRestTemplate = lbRestTemplate;
     }
@@ -93,6 +90,8 @@ public class AbacClient {
 
     /** PDP 不可用。文档服务对此一律 fail-closed（拒绝而不是放行）。 */
     public static class PdpUnavailableException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
 
         public PdpUnavailableException(String message) {
             super(message);

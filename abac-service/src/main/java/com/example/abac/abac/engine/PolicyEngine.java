@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
+import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.spel.SpelEvaluationException;
 import org.springframework.expression.spel.SpelMessage;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -19,7 +20,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -217,10 +217,14 @@ public class PolicyEngine {
         // 属性访问只走 MapPropertyAccessor：表达式能读到的只有这三个属性包里的键。
         // setPropertyAccessors 显式替换默认的 ReflectivePropertyAccessor——否则属性包一旦
         // 混入 POJO，表达式仍可经反射读其 getter（只读、无方法调用，但违背"只能读 Map 键"的承诺）。
-        ctx.setPropertyAccessors(List.of(new MapPropertyAccessor()));
+        // 用显式非空集合（而非 List.of/Collections.emptyList）传参：Spring 在 @NonNullApi 包下
+        // 把 setter 参数标为隐式 @NonNull，泛型 varargs 工厂方法会让 JDT 无法静态证明非空。
+        List<PropertyAccessor> accessors = new ArrayList<>(1);
+        accessors.add(new MapPropertyAccessor());
+        ctx.setPropertyAccessors(accessors);
         // 彻底禁方法调用：移除所有 MethodResolver，表达式只能读属性、做比较，
         // 即使属性值是对象也调不到它的任何方法（堵死反射/RCE 面）。属性只读访问不受影响。
-        ctx.setMethodResolvers(Collections.emptyList());
+        ctx.setMethodResolvers(new ArrayList<>());
         // 硬性封死类型引用（T(...) 与 new Xxx() 都经此解析），黑名单之外的最后一道闸。
         ctx.setTypeLocator(typeName -> {
             throw new SpelEvaluationException(SpelMessage.TYPE_NOT_FOUND, typeName);

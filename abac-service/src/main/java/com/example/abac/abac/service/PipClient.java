@@ -58,6 +58,8 @@ public class PipClient {
     /** PIP 不可用（业务服务宕机 / 资源不存在 / 网络异常）。 */
     public static class PipException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
         public PipException(String message) {
             super(message);
         }
