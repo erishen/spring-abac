@@ -1369,3 +1369,67 @@ button.link {
   color: var(--ink);
   margin-right: 4px;
 }
+
+/* ================= 复核队列：状态徽章与小操作按钮 ================= */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.badge-pending {
+  background: #fff4e0;
+  color: #b45309;
+}
+.badge-pending::before {
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+.badge-approved {
+  background: #e6f6ee;
+  color: #047857;
+}
+.badge-approved::before {
+  background: #10b981;
+}
+.badge-rejected {
+  background: #fdecec;
+  color: #b91c1c;
+}
+.badge-rejected::before {
+  background: #ef4444;
+}
+button.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+button.btn-sm.btn-primary {
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+button.btn-sm.btn-primary:hover {
+  filter: brightness(1.06);
+}
+button.btn-sm.btn-danger {
+  border: 1px solid #f1aeb5;
+  background: #fff;
+  color: #c92a2a;
+}
+button.btn-sm.btn-danger:hover {
+  background: #fff5f5;
+}

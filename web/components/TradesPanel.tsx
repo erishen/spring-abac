@@ -330,18 +330,32 @@ export default function TradesPanel() {
                   <td>{t.instrument}</td>
                   <td>{t.policyName}</td>
                   <td>
-                    {t.status === "PENDING" && <span className="warn">待复核</span>}
-                    {t.status === "APPROVED" && <span className="ok">已批准（{t.decidedBy ?? "-"}）</span>}
-                    {t.status === "REJECTED" && <span className="err">已拒绝（{t.decidedBy ?? "-"}）</span>}
+                    {t.status === "PENDING" && <span className="badge badge-pending">待复核</span>}
+                    {t.status === "APPROVED" && (
+                      <span className="badge badge-approved">
+                        已批准 · {t.decidedBy ?? "-"}
+                      </span>
+                    )}
+                    {t.status === "REJECTED" && (
+                      <span className="badge badge-rejected">
+                        已拒绝 · {t.decidedBy ?? "-"}
+                      </span>
+                    )}
                   </td>
                   <td>
                     {t.status === "PENDING" && canReview ? (
                       <span className="row" style={{ gap: 8 }}>
-                        <button className="btn" onClick={() => decide(t.id, true)}>批准</button>
-                        <button className="btn ghost" onClick={() => decide(t.id, false)}>拒绝</button>
+                        <button className="btn btn-sm btn-primary" onClick={() => decide(t.id, true)}>
+                          ✓ 批准
+                        </button>
+                        <button className="btn btn-sm btn-danger" onClick={() => decide(t.id, false)}>
+                          ✕ 拒绝
+                        </button>
                       </span>
                     ) : (
-                      "-"
+                      <span className="sub">
+                        {t.status === "APPROVED" ? "已批准并计入当日累计" : t.status === "REJECTED" ? "已拒绝，未成交" : "仅查看"}
+                      </span>
                     )}
                   </td>
                 </tr>
