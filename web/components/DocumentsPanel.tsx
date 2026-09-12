@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   createDocument,
   deleteDocument,
+  getDocument,
   listDocuments,
   publishDocument,
   updateDocument,
@@ -22,6 +23,9 @@ export default function DocumentsPanel() {
   const [size, setSize] = useState(10);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
+
+  const [detail, setDetail] = useState<DocumentDto | null>(null);
+  const [detailErr, setDetailErr] = useState("");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -60,6 +64,16 @@ export default function DocumentsPanel() {
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "创建失败");
+    }
+  }
+
+  async function showDetail(id: number) {
+    if (!token) return;
+    setDetailErr("");
+    try {
+      setDetail(await getDocument(token, id));
+    } catch (e) {
+      setDetailErr(e instanceof Error ? e.message : "加载详情失败");
     }
   }
 
@@ -166,7 +180,9 @@ export default function DocumentsPanel() {
           <tbody>
             {(page?.content ?? []).map((d: DocumentDto) => (
               <tr key={d.id}>
-                <td className="name">{d.title}</td>
+                <td className="name" title={d.title}>
+                  {d.title}
+                </td>
                 <td>{d.owner}</td>
                 <td>{d.department}</td>
                 <td>
@@ -178,6 +194,13 @@ export default function DocumentsPanel() {
                 </td>
                 <td>{d.status}</td>
                 <td className="actions">
+                  <button
+                    className="btn ghost"
+                    style={{ padding: "5px 9px", fontSize: 12, marginRight: 6 }}
+                    onClick={() => showDetail(d.id)}
+                  >
+                    详情
+                  </button>
                   <button
                     className="btn ghost"
                     style={{ padding: "5px 9px", fontSize: 12, marginRight: 6 }}
@@ -241,6 +264,74 @@ export default function DocumentsPanel() {
           </span>
         </div>
       </div>
+
+      {detail && (
+        <div className="modal-backdrop" onClick={() => setDetail(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>文档详情</h3>
+              <button
+                className="btn ghost"
+                style={{ padding: "4px 10px", fontSize: 12 }}
+                onClick={() => setDetail(null)}
+              >
+                关闭
+              </button>
+            </div>
+            <div className="modal-body">
+              {detailErr && <div className="err">{detailErr}</div>}
+              <div className="detail-row">
+                <span className="k">标题</span>
+                <span className="v">{detail.title}</span>
+              </div>
+              <div className="detail-row">
+                <span className="k">作者</span>
+                <span className="v">{detail.owner}</span>
+              </div>
+              <div className="detail-row">
+                <span className="k">部门</span>
+                <span className="v">{detail.department}</span>
+              </div>
+              <div className="detail-row">
+                <span className="k">密级</span>
+                <span className="v">
+                  {detail.classification} (≥{detail.requiredClearance})
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="k">状态</span>
+                <span className="v">{detail.status}</span>
+              </div>
+              {detail.createdAt != null && (
+                <div className="detail-row">
+                  <span className="k">创建时间</span>
+                  <span className="v">
+                    {new Date(detail.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              )}
+              <div
+                className="detail-row"
+                style={{ display: "block", paddingTop: 12 }}
+              >
+                <div style={{ color: "var(--muted)", marginBottom: 6 }}>
+                  内容
+                </div>
+                <div
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {detail.content || "（无内容）"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
