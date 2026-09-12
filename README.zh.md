@@ -1,5 +1,7 @@
 # spring-abac
 
+> [English](README.md) · [中文](README.zh.md)
+
 基于属性的访问控制（ABAC）微服务演示系统：Spring Boot 3.2 + Spring Cloud 2023 + Next.js。
 
 与同目录的 `spring-rbac`（基于角色的访问控制）是**对照实验**：同一套微服务骨架，
