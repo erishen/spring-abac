@@ -10,10 +10,11 @@ import DocumentsPanel from "@/components/DocumentsPanel";
 import UsersPanel from "@/components/UsersPanel";
 import AuditPanel from "@/components/AuditPanel";
 import GlossaryPanel from "@/components/GlossaryPanel";
+import ArchitecturePanel from "@/components/ArchitecturePanel";
 import TradesPanel from "@/components/TradesPanel";
 import AgentPanel from "@/components/AgentPanel";
 
-type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict" | "trades" | "agent";
+type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict" | "trades" | "agent" | "arch";
 
 type TabGroup = "demo" | "biz" | "mgmt" | "ref";
 
@@ -44,7 +45,10 @@ const TAB_GROUPS: { key: TabGroup; label: string; tabs: { key: Tab; label: strin
   {
     key: "ref",
     label: "参考",
-    tabs: [{ key: "dict", label: "字典" }],
+    tabs: [
+      { key: "dict", label: "字典" },
+      { key: "arch", label: "架构" },
+    ],
   },
 ];
 
@@ -131,6 +135,7 @@ export default function Home() {
       {tab === "users" && <UsersPanel />}
       {tab === "audit" && <AuditPanel />}
       {tab === "dict" && <GlossaryPanel />}
+      {tab === "arch" && <ArchitecturePanel />}
     </div>
   );
 }

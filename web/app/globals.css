@@ -1173,3 +1173,199 @@ button.link {
   background-clip: content-box;
   border: 2px solid transparent;
 }
+
+/* ================= 架构图页 ================= */
+.arch-topo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.arch-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.arch-node {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 12px;
+  color: var(--muted);
+  width: 100%;
+  box-shadow: var(--shadow);
+  word-break: break-word;
+}
+.arch-node b {
+  color: var(--ink);
+  font-size: 13px;
+}
+.arch-client {
+  border-color: #a5d8ff;
+  background: #f0f9ff;
+}
+.arch-pep {
+  border-color: #ffd8a8;
+  background: #fff9f0;
+}
+.arch-pdp {
+  border-color: #b197fc;
+  background: #f6f3ff;
+}
+.arch-svc {
+  border-color: #b2f2bb;
+  background: #f6fffa;
+}
+.arch-misc {
+  border-color: var(--line);
+  background: #fafbfe;
+}
+.arch-wide {
+  width: 100%;
+}
+.arch-nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.arch-flow-v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+.arch-arrow {
+  font-size: 16px;
+  color: var(--brand);
+  line-height: 1;
+}
+
+/* 链路步骤 */
+.arch-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.arch-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.arch-step-pdp {
+  border-color: #b197fc;
+  background: #f6f3ff;
+}
+.arch-step-no {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+.arch-step b {
+  font-size: 13px;
+}
+.arch-step p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-word;
+}
+.arch-flow > .arch-arrow {
+  text-align: center;
+  padding: 2px 0;
+}
+
+/* 三态去向 */
+.arch-verdict3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.arch-verdict {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.arch-verdict b {
+  font-size: 13px;
+}
+
+/* 四组件 */
+.arch-components {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.arch-comp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 12px;
+  color: var(--muted);
+}
+.arch-comp-name {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* 业务场景对比 */
+.arch-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.arch-compare-col {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: #fff;
+}
+.arch-compare-col h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.arch-compare-row {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.arch-compare-row b {
+  color: var(--ink);
+  margin-right: 4px;
+}
