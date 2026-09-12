@@ -10,6 +10,7 @@ import org.springframework.expression.spel.SpelEvaluationException;
 import org.springframework.expression.spel.SpelMessage;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -174,7 +175,7 @@ public class PolicyEngine {
         parser.parseExpression(condition); // 语法错误抛 SpelParseException
     }
 
-    private boolean conditionMatches(Policy p, EvaluationContext ctx) {
+    private boolean conditionMatches(Policy p, @NonNull EvaluationContext ctx) {
         String condition = p.getCondition();
         if (condition == null || condition.isBlank()) {
             return true;
@@ -201,7 +202,7 @@ public class PolicyEngine {
         return policyScope.equalsIgnoreCase(actual);
     }
 
-    private EvaluationContext buildContext(Map<String, Object> subject,
+    private @NonNull EvaluationContext buildContext(Map<String, Object> subject,
                                            Map<String, Object> resource,
                                            Map<String, Object> env,
                                            String action) {
