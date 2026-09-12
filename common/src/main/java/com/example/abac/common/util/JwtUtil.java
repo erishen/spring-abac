@@ -1,4 +1,4 @@
-package com.example.abac.auth.util;
+package com.example.abac.common.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,12 +17,15 @@ import java.util.Map;
  * 与 RBAC 版的差别：payload 多挂一个 {@code attrs} 对象，承载 ABAC 所需的主体属性
  * （dept / clearance / region / title ...）。PDP 判定时不再回头查库，
  * JWT 本身就是主体属性的载体（网关解析后随决策请求一起发给 PDP）。
+ *
+ * 抽自 auth-service 与 gateway-service 的逐字节相同实现，统一到 common 避免改一处漏一处。
  */
 public class JwtUtil {
 
     private final String secret;
     private final long ttlMillis;
     private final ObjectMapper mapper = new ObjectMapper();
+    private static final String ALG_HS256 = "HS256";
 
     public JwtUtil(String secret, long ttlMillis) {
         this.secret = secret;
@@ -38,7 +41,7 @@ public class JwtUtil {
     public String generate(String username, Map<String, Object> attrs) {
         long now = System.currentTimeMillis();
         Map<String, Object> header = new LinkedHashMap<>();
-        header.put("alg", "HS256");
+        header.put("alg", ALG_HS256);
         header.put("typ", "JWT");
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sub", username);
@@ -83,8 +86,6 @@ public class JwtUtil {
                 });
             }
             return new Claims(sub.toString(), attrs);
-        } catch (JwtException e) {
-            throw e;
         } catch (Exception e) {
             throw new JwtException("invalid payload");
         }

@@ -8,7 +8,7 @@ import com.example.abac.auth.dto.AuthDtos.UserDto;
 import com.example.abac.auth.dto.AuthDtos.UserInfo;
 import com.example.abac.auth.exception.AuthFailedException;
 import com.example.abac.auth.service.AuthService;
-import com.example.abac.auth.util.JwtUtil;
+import com.example.abac.common.util.JwtUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

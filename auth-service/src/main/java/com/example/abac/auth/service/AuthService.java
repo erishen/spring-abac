@@ -7,7 +7,7 @@ import com.example.abac.auth.exception.ConflictException;
 import com.example.abac.auth.exception.NotFoundException;
 import com.example.abac.auth.model.User;
 import com.example.abac.auth.repository.UserRepository;
-import com.example.abac.auth.util.JwtUtil;
+import com.example.abac.common.util.JwtUtil;
 import com.example.abac.auth.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
