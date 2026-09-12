@@ -6,12 +6,14 @@ import {
   approveAgentReview,
   checkTool,
   listAgentReviews,
+  listPolicies,
   myTools,
   rejectAgentReview,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type {
   AgentReviewTask,
+  PolicyDto,
   SessionStats,
   ToolCallRequest,
   ToolExecution,
@@ -59,6 +61,7 @@ export default function AgentPanel() {
   const [executions, setExecutions] = useState<ToolExecution[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [reviews, setReviews] = useState<AgentReviewTask[]>([]);
+  const [toolPolicies, setToolPolicies] = useState<PolicyDto[]>([]);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
 
@@ -67,14 +70,22 @@ export default function AgentPanel() {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      const [t, s, r] = await Promise.all([
+      const [t, s, r, p] = await Promise.all([
         myTools(token),
         agentSession(session, token),
         listAgentReviews(token),
+        listPolicies(token),
       ]);
       setExecutions(t);
       setStats(s);
       setReviews(r);
+      // TOOL 域由 WEB / EMAIL / PAYMENT / FS / CODE / TOOL 六类资源组成，全部展示
+      const TOOL_TYPES = ["WEB", "EMAIL", "PAYMENT", "FS", "CODE", "TOOL"];
+      setToolPolicies(
+        p
+          .filter((x) => TOOL_TYPES.includes((x.resourceType ?? "").toUpperCase()))
+          .sort((a, b) => b.priority - a.priority),
+      );
     } catch {
       // 列表失败不阻断面板使用
     }
@@ -252,6 +263,49 @@ export default function AgentPanel() {
         )}
         {err && <div className="err" style={{ marginTop: 12 }}>{err}</div>}
         {ok && <div className="ok" style={{ marginTop: 12 }}>{ok}</div>}
+      </div>
+
+      <div className="card">
+        <h3>当前生效的工具策略（TOOL 域）</h3>
+        <p className="sub">
+          WEB / EMAIL / PAYMENT / FS / CODE 五类工具各自的 DENY、REVIEW 与 PERMIT 兜底，
+          加上 TOOL/LIST、TOOL/EXECUTE 网关兜底。按优先级从高到低求值，DENY 短路（deny-override），
+          REVIEW 转人工复核，都不中才落到 PERMIT 兜底。
+        </p>
+        {toolPolicies.length === 0 ? (
+          <div className="empty-state">暂无 TOOL 策略（可在「策略」Tab 录入）</div>
+        ) : (
+          <table className="pol-table">
+            <thead>
+              <tr>
+                <th>优先级</th>
+                <th>效果</th>
+                <th>策略</th>
+                <th>资源</th>
+                <th>动作</th>
+                <th>条件</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              {toolPolicies.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.priority}</td>
+                  <td>
+                    {p.effect === "DENY" && <span className="err">DENY</span>}
+                    {p.effect === "REVIEW" && <span className="warn">REVIEW</span>}
+                    {p.effect === "PERMIT" && <span className="ok">PERMIT</span>}
+                  </td>
+                  <td>{p.name}</td>
+                  <td>{p.resourceType ?? "*"}</td>
+                  <td>{p.action ?? "*"}</td>
+                  <td className="cond">{p.condition ?? "-"}</td>
+                  <td className="sub">{p.description ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div className="card">
