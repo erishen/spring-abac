@@ -27,7 +27,8 @@ export interface TokenResponse {
 
 // ---------------- 策略 ----------------
 
-export type Effect = "PERMIT" | "DENY";
+/** 策略效果：PERMIT 放行 / DENY 拒绝 / REVIEW 转人工复核（风控第三态）。 */
+export type Effect = "PERMIT" | "DENY" | "REVIEW";
 
 export interface PolicyDto {
   id: number;
@@ -57,8 +58,7 @@ export interface UpdatePolicyRequest {
   name?: string;
   description?: string;
   effect?: Effect;
-  resourceType?: string;
-  action?: string;
+  resourceType?: string;  action?: string;
   condition?: string;
   priority?: number;
   enabled?: boolean;
@@ -168,4 +168,58 @@ export interface AuditStats {
   total: number;
   allows: number;
   denies: number;
+}
+
+// ---------------- 交易风控（risk-service） ----------------
+
+export interface TradeRequest {
+  amount: number;
+  channel: string;
+  region: string;
+  instrument: string;
+}
+
+export interface TradeExecution {
+  id: number;
+  username: string;
+  amount: number;
+  channel: string;
+  region: string;
+  instrument: string;
+  effect: string;
+  policyName: string;
+  createdAt: number;
+}
+
+export interface TradeResult {
+  effect: "PERMIT" | "DENY" | "REVIEW";
+  permitted: boolean;
+  policyName?: string | null;
+  reason?: string | null;
+  reviewId?: number | null;
+  message?: string | null;
+  execution?: TradeExecution | null;
+}
+
+export interface ReviewTask {
+  id: number;
+  username: string;
+  amount: number;
+  channel: string;
+  region: string;
+  instrument: string;
+  policyName: string;
+  createdAt: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  decidedBy?: string | null;
+  decidedAt?: number | null;
+}
+
+export interface TradeStats {
+  date: string;
+  username: string;
+  count: number;
+  amountTotal: number;
+  limitAmount: number;
+  limitCount: number | null;
 }

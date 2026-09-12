@@ -8,7 +8,12 @@ import type {
   DocumentDto,
   DocumentPage,
   PolicyDto,
+  ReviewTask,
   TokenResponse,
+  TradeExecution,
+  TradeRequest,
+  TradeResult,
+  TradeStats,
   UpdateDocumentRequest,
   UpdatePolicyRequest,
   UserDto,
@@ -169,3 +174,23 @@ export const listAudit = (
 
 export const getAuditStats = (token: string) =>
   api<AuditStats>("/api/audit/stats", { token });
+
+// ---------------- 交易风控（risk-service） ----------------
+
+export const executeTrade = (body: TradeRequest, token?: string) =>
+  api<TradeResult>("/api/trades", { method: "POST", body, token });
+
+export const myTrades = (token?: string) =>
+  api<TradeExecution[]>("/api/trades", { token });
+
+export const tradeStats = (token?: string) =>
+  api<TradeStats>("/api/trades/stats", { token });
+
+export const listReviews = (token?: string) =>
+  api<ReviewTask[]>("/api/trades/reviews", { token });
+
+export const approveReview = (id: number, token?: string) =>
+  api<{ effect: string }>(`/api/trades/reviews/${id}/approve`, { method: "POST", token });
+
+export const rejectReview = (id: number, token?: string) =>
+  api<{ effect: string }>(`/api/trades/reviews/${id}/reject`, { method: "POST", token });
