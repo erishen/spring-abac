@@ -5,6 +5,7 @@ import { listUsers, updateUserAttributes } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { UserDto } from "@/lib/types";
 import { AttrBar } from "./AttrBar";
+import { CLEARANCE_LABELS, clearanceLabel } from "@/lib/clearance";
 
 export default function UsersPanel() {
   const { token, user } = useAuth();
@@ -79,7 +80,9 @@ export default function UsersPanel() {
               <tr key={u.id}>
                 <td style={{ fontWeight: 600 }}>{u.username}</td>
                 <td>{u.department}</td>
-                <td>{u.clearance}</td>
+                <td>
+                  {u.clearance} · {clearanceLabel(u.clearance)}
+                </td>
                 <td>{u.region}</td>
                 <td>{u.title}</td>
                 <td>
@@ -128,13 +131,16 @@ export default function UsersPanel() {
             </div>
             <div className="field">
               <label>clearance（1-5）</label>
-              <input
-                type="number"
-                min={1}
-                max={5}
+              <select
                 value={draft.clearance}
                 onChange={(e) => setDraft({ ...draft, clearance: Number(e.target.value) })}
-              />
+              >
+                {Object.entries(CLEARANCE_LABELS).map(([v, label]) => (
+                  <option key={v} value={v}>
+                    {v} · {label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label>region</label>
