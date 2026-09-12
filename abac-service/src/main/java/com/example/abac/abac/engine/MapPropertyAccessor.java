@@ -3,6 +3,7 @@ package com.example.abac.abac.engine;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
+import org.springframework.lang.Nullable;
 
 import java.util.Map;
 
@@ -17,29 +18,31 @@ import java.util.Map;
 public class MapPropertyAccessor implements PropertyAccessor {
 
     @Override
+    @Nullable
     public Class<?>[] getSpecificTargetClasses() {
         return new Class<?>[]{Map.class};
     }
 
     @Override
-    public boolean canRead(EvaluationContext context, Object target, String name) {
+    public boolean canRead(EvaluationContext context, @Nullable Object target, String name) {
         return target instanceof Map;
     }
 
     @Override
-    public TypedValue read(EvaluationContext context, Object target, String name) {
+    public TypedValue read(EvaluationContext context, @Nullable Object target, String name) {
         Map<?, ?> map = (Map<?, ?>) target;
         return new TypedValue(map.get(name));
     }
 
     @Override
-    public boolean canWrite(EvaluationContext context, Object target, String name) {
+    public boolean canWrite(EvaluationContext context, @Nullable Object target, String name) {
         // 策略表达式是只读的：不允许通过表达式回写属性。
         return false;
     }
 
     @Override
-    public void write(EvaluationContext context, Object target, String name, Object newValue) {
+    public void write(EvaluationContext context, @Nullable Object target, String name,
+                      @Nullable Object newValue) {
         throw new UnsupportedOperationException("policy expressions are read-only");
     }
 }
