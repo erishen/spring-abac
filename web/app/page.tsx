@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { AttrBar } from "@/components/AttrBar";
+import { SubjectSwitcher } from "@/components/SubjectSwitcher";
 import PoliciesPanel from "@/components/PoliciesPanel";
 import SimulatorPanel from "@/components/SimulatorPanel";
 import DocumentsPanel from "@/components/DocumentsPanel";
@@ -53,7 +54,7 @@ const TAB_GROUPS: { key: TabGroup; label: string; tabs: { key: Tab; label: strin
 ];
 
 export default function Home() {
-  const { token, user, ready, logout } = useAuth();
+  const { token, user, ready } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("simulator");
 
@@ -81,16 +82,7 @@ export default function Home() {
             <span className="brand-sub">ABAC 策略演示 · 8 微服务</span>
           </span>
         </div>
-        <div className="who">
-          <span className="who-line">
-            当前主体 <b>{user?.username ?? "…"}</b>
-            {user?.title && <span className="chip">{user.title}</span>}
-            {user?.department && <span className="chip dim">{user.department}</span>}
-          </span>
-          <button className="link" onClick={logout}>
-            退出
-          </button>
-        </div>
+        <SubjectSwitcher />
       </div>
 
       <div className="card" style={{ padding: "12px 16px" }}>

@@ -184,7 +184,7 @@ export default function DocumentsPanel() {
       </div>
 
       <div className="card">
-        <h2>可见文档 {page ? `（共 ${page.totalElements} 条）` : ""}</h2>
+        <h2>可见文档{page ? `（共 ${page.totalElements} 条）` : ""}</h2>
         <table className="cust-table">
           <thead>
             <tr>
