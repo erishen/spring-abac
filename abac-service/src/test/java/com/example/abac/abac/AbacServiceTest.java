@@ -67,7 +67,7 @@ class AbacServiceTest {
         PolicyRepository repo = fakeRepository();
         AbacService svc = newService(repo);
         svc.seedIfEmpty();
-        assertThat(svc.listPolicies()).hasSize(18);
+        assertThat(svc.listPolicies()).hasSize(24);
 
         // 匿名主体读审计域：仅 admin 可见（P-40），未匹配任何 PERMIT → 默认拒绝
         AbacDtos.DecisionRequest req = new AbacDtos.DecisionRequest(
@@ -75,6 +75,37 @@ class AbacServiceTest {
                 new AbacDtos.ResourceRef("AUDIT", "1", null),
                 "READ", null);
         assertThat(svc.decide(req).permitted()).isFalse();
+    }
+
+    @Test
+    void review_third_state_wins_over_permit_but_loses_to_deny() {
+        PolicyRepository repo = fakeRepository();
+        AbacService svc = newService(repo);
+        // REVIEW 优先级高于 PERMIT：大额交易应转人工复核而非直接放行
+        save(svc, Effect.PERMIT, "TRADE", "EXECUTE", "true", 12);
+        save(svc, Effect.REVIEW, "TRADE", "EXECUTE", "resource.amount > 50000", 85);
+        AbacDtos.DecisionRequest big = new AbacDtos.DecisionRequest(
+                Map.of("username", "alice", "title", "engineer"),
+                new AbacDtos.ResourceRef("TRADE", null,
+                        Map.of("type", "TRADE", "amount", 60000,
+                                "channel", "MOBILE", "region", "CN", "cumulativeAfter", 60000)),
+                "EXECUTE", null);
+        var review = svc.decide(big);
+        assertThat(review.effect()).isEqualTo("REVIEW");
+        assertThat(review.permitted()).isFalse();
+
+        // 但 DENY 优先级仍高于 REVIEW：黑名单/超限类拒绝不因 REVIEW 翻案
+        save(svc, Effect.DENY, "TRADE", "EXECUTE",
+                "resource.channel == 'WEB' && resource.region != 'CN'", 75);
+        AbacDtos.DecisionRequest webOverseas = new AbacDtos.DecisionRequest(
+                Map.of("username", "carol", "title", "manager"),
+                new AbacDtos.ResourceRef("TRADE", null,
+                        Map.of("type", "TRADE", "amount", 60000,
+                                "channel", "WEB", "region", "US", "cumulativeAfter", 60000)),
+                "EXECUTE", null);
+        var denied = svc.decide(webOverseas);
+        assertThat(denied.effect()).isEqualTo("DENY");
+        assertThat(denied.permitted()).isFalse();
     }
 
     @Test

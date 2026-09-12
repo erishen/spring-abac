@@ -414,6 +414,27 @@ public class AbacService {
                 Effect.PERMIT, "POLICY", "READ",
                 "subject.title == 'manager' || subject.title == 'admin'", 8);
 
+        // ---- 风控域（TRADE）：独立 risk-service 的下单前置校验，演示 REVIEW 第三态与状态累计 ----
+        save("P-85 单笔大额转人工复核", "金额超过 50000 的交易不直接放行，转入工复核（REVIEW 第三态）",
+                Effect.REVIEW, "TRADE", "EXECUTE", "resource.amount > 50000", 85);
+
+        save("P-80 当日累计超限拒绝", "当日累计成交金额（含本笔）超过 100000 直接拒绝",
+                Effect.DENY, "TRADE", "EXECUTE", "resource.cumulativeAfter > 100000", 80);
+
+        save("P-75 境外网页渠道禁止", "境外 + 网页渠道的组合直接拒绝（典型渠道风控）",
+                Effect.DENY, "TRADE", "EXECUTE",
+                "resource.channel == 'WEB' && resource.region != 'CN'", 75);
+
+        save("P-70 工程师单笔限额", "engineer 岗位单笔超过 20000 拒绝（演示用 alice）",
+                Effect.DENY, "TRADE", "EXECUTE",
+                "subject.title == 'engineer' && resource.amount > 20000", 70);
+
+        save("P-18 登录用户可查看交易", "交易列表对所有登录用户可见，单笔裁决由上面的规则把关",
+                Effect.PERMIT, "TRADE", "LIST", null, 18);
+
+        save("P-12 交易兜底放行", "无风控规则命中时允许成交（DENY/REVIEW 规则在上层拦截）",
+                Effect.PERMIT, "TRADE", "EXECUTE", null, 12);
+
         log.info("[abac] seeded {} demo policies (deny-override, default deny)", policyRepository.count());
         invalidatePolicies();
     }
@@ -444,12 +465,12 @@ public class AbacService {
 
     private static Effect parseEffect(String raw) {
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("effect 必填（PERMIT / DENY）");
+            throw new IllegalArgumentException("effect 必填（PERMIT / DENY / REVIEW）");
         }
         try {
             return Effect.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("effect 只能是 PERMIT 或 DENY: " + raw);
+            throw new IllegalArgumentException("effect 只能是 PERMIT / DENY / REVIEW: " + raw);
         }
     }
 

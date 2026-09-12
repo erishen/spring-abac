@@ -107,6 +107,7 @@ public class PolicyEngine {
 
         List<TraceEntry> trace = new ArrayList<>();
         Policy denyHit = null;
+        Policy reviewHit = null;
         Policy permitHit = null;
 
         for (Policy p : candidates) {
@@ -129,6 +130,10 @@ public class PolicyEngine {
                 if (denyHit == null) {
                     denyHit = p;
                 }
+            } else if (p.getEffect() == Effect.REVIEW) {
+                if (reviewHit == null) {
+                    reviewHit = p;
+                }
             } else if (permitHit == null) {
                 permitHit = p;
             }
@@ -137,6 +142,10 @@ public class PolicyEngine {
         if (denyHit != null) {
             return new Decision(Effect.DENY.name(), false, denyHit.getId(), denyHit.getName(),
                     "denied by policy: " + denyHit.getName(), List.copyOf(trace));
+        }
+        if (reviewHit != null) {
+            return new Decision(Effect.REVIEW.name(), false, reviewHit.getId(), reviewHit.getName(),
+                    "review required by policy: " + reviewHit.getName(), List.copyOf(trace));
         }
         if (permitHit != null) {
             return new Decision(Effect.PERMIT.name(), true, permitHit.getId(), permitHit.getName(),
