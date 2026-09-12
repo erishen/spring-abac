@@ -11,6 +11,7 @@ import {
   tradeStats,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { GotoPoliciesLink } from "./GotoPoliciesLink";
 import type { PolicyDto, ReviewTask, TradeExecution, TradeRequest, TradeResult, TradeStats } from "@/lib/types";
 
 const EMPTY: TradeRequest = {
@@ -229,6 +230,7 @@ export default function TradesPanel() {
             </tbody>
           </table>
         )}
+        <GotoPoliciesLink />
       </div>
 
       <div className="card">

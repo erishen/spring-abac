@@ -57,6 +57,13 @@ export default function Home() {
     if (ready && !token) router.replace("/login");
   }, [ready, token, router]);
 
+  // 业务面板的「去策略管理修改」入口：跨组件切换到策略 Tab
+  useEffect(() => {
+    const h = (e: Event) => setTab((e as CustomEvent<string>).detail as Tab);
+    window.addEventListener("go-tab", h);
+    return () => window.removeEventListener("go-tab", h);
+  }, []);
+
   if (!ready) return <div className="center">加载中…</div>;
   if (!token) return null;
 

@@ -11,6 +11,7 @@ import {
   rejectAgentReview,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { GotoPoliciesLink } from "./GotoPoliciesLink";
 import type {
   AgentReviewTask,
   PolicyDto,
@@ -306,6 +307,7 @@ export default function AgentPanel() {
             </tbody>
           </table>
         )}
+        <GotoPoliciesLink />
       </div>
 
       <div className="card">

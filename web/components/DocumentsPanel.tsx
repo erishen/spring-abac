@@ -11,6 +11,7 @@ import {
   updateDocument,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { GotoPoliciesLink } from "./GotoPoliciesLink";
 import type { DocumentDto, DocumentPage, PolicyDto } from "@/lib/types";
 
 const CLASSIFICATIONS = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"];
@@ -322,6 +323,7 @@ export default function DocumentsPanel() {
             </tbody>
           </table>
         )}
+        <GotoPoliciesLink />
       </div>
 
       {detail && (

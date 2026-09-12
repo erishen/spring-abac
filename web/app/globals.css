@@ -1034,6 +1034,13 @@ button.link {
   font-size: 12px;
 }
 
+/* 策略清单卡右下角「去策略管理修改」入口 */
+.goto-policies {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 /* SpEL 条件：等宽 + 可断行，长表达式不至于撑破卡片 */
 .cond {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
