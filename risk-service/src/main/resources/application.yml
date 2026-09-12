@@ -1,0 +1,28 @@
+server:
+  port: 4115
+
+spring:
+  application:
+    name: risk-service
+  config:
+    import: optional:configserver:http://${CONFIG_SERVER_HOST:localhost}:8889
+
+logging:
+  level:
+    org.springframework: WARN
+    # 开发/演示环境：config-server optional: import 启动瞬间未就绪的 WARN 属预期，降到 ERROR 避免噪音。
+    org.springframework.cloud.config.client.ConfigServerConfigDataLoader: ERROR
+    "org.springframework.cloud.loadbalancer.config.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger": OFF
+
+# Eureka 配置必须是顶层 eureka.*，写在 spring.* 下不生效（Spring Cloud 不读 spring.eureka）
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8762/eureka
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+
+# 风控参数：REVIEW 任务上限、累计额度/次数上限（内存演示，重启即清零）
+risk:
+  review-max-pending: 200
