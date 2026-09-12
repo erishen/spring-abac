@@ -15,15 +15,37 @@ import AgentPanel from "@/components/AgentPanel";
 
 type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict" | "trades" | "agent";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "simulator", label: "裁决模拟" },
-  { key: "trades", label: "交易风控" },
-  { key: "agent", label: "Agent 校验" },
-  { key: "documents", label: "文档" },
-  { key: "policies", label: "策略" },
-  { key: "users", label: "用户属性" },
-  { key: "audit", label: "审计" },
-  { key: "dict", label: "字典" },
+type TabGroup = "demo" | "biz" | "mgmt" | "ref";
+
+const TAB_GROUPS: { key: TabGroup; label: string; tabs: { key: Tab; label: string }[] }[] = [
+  {
+    key: "demo",
+    label: "演示",
+    tabs: [{ key: "simulator", label: "裁决模拟" }],
+  },
+  {
+    key: "biz",
+    label: "业务",
+    tabs: [
+      { key: "trades", label: "交易风控" },
+      { key: "agent", label: "Agent 校验" },
+      { key: "documents", label: "文档" },
+    ],
+  },
+  {
+    key: "mgmt",
+    label: "管理",
+    tabs: [
+      { key: "policies", label: "策略" },
+      { key: "users", label: "用户属性" },
+      { key: "audit", label: "审计" },
+    ],
+  },
+  {
+    key: "ref",
+    label: "参考",
+    tabs: [{ key: "dict", label: "字典" }],
+  },
 ];
 
 export default function Home() {
@@ -42,12 +64,19 @@ export default function Home() {
     <div className="app">
       <div className="topbar">
         <div className="brand">
-          <span className="dot" />
-          spring-abac 控制台
+          <span className="brand-mark">AB</span>
+          <span className="brand-text">
+            <b>spring-abac 控制台</b>
+            <span className="brand-sub">ABAC 策略演示 · 8 微服务</span>
+          </span>
         </div>
         <div className="who">
-          当前主体 <b>{user?.username ?? "…"}</b>
-          <button className="link" style={{ marginLeft: 12 }} onClick={logout}>
+          <span className="who-line">
+            当前主体 <b>{user?.username ?? "…"}</b>
+            {user?.title && <span className="chip">{user.title}</span>}
+            {user?.department && <span className="chip dim">{user.department}</span>}
+          </span>
+          <button className="link" onClick={logout}>
             退出
           </button>
         </div>
@@ -70,17 +99,22 @@ export default function Home() {
         />
       </div>
 
-      <div className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={tab === t.key ? "active" : ""}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
+      <nav className="tabs" aria-label="功能分区">
+        {TAB_GROUPS.map((g) => (
+          <div className="tab-group" key={g.key}>
+            <span className="tab-group-label">{g.label}</span>
+            {g.tabs.map((t) => (
+              <button
+                key={t.key}
+                className={tab === t.key ? "active" : ""}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         ))}
-      </div>
+      </nav>
 
       {tab === "simulator" && <SimulatorPanel />}
       {tab === "trades" && <TradesPanel />}

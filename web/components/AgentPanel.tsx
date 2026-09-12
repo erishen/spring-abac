@@ -290,7 +290,7 @@ export default function AgentPanel() {
         )}
         <h4 style={{ marginTop: 16 }}>最近工具调用</h4>
         {executions.length === 0 ? (
-          <p className="sub">暂无放行记录</p>
+          <div className="empty-state">暂无放行记录</div>
         ) : (
           <table className="cust-table">
             <thead>
@@ -330,7 +330,7 @@ export default function AgentPanel() {
           {!canReview && " 当前账号非 manager/admin，仅可查看。"}
         </p>
         {reviews.length === 0 ? (
-          <p className="sub">暂无复核任务</p>
+          <div className="empty-state">暂无复核任务</div>
         ) : (
           <table className="pol-table">
             <thead>

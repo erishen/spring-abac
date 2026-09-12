@@ -194,8 +194,16 @@ export default function SimulatorPanel() {
 
         {result && (
           <>
-            <div className={`verdict ${result.permitted ? "allow" : "deny"}`}>
-              {result.permitted ? "PERMIT 允许" : "DENY 拒绝"}
+            <div
+              className={`verdict ${
+                result.effect === "REVIEW" ? "review" : result.permitted ? "allow" : "deny"
+              }`}
+            >
+              {result.effect === "REVIEW"
+                ? "REVIEW 转人工复核"
+                : result.permitted
+                  ? "PERMIT 允许"
+                  : "DENY 拒绝"}
             </div>
             <div className="verdict-why">
               命中策略：<b>{result.policyName ?? "无（默认拒绝）"}</b>

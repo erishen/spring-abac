@@ -198,7 +198,7 @@ export default function TradesPanel() {
           都不中才落到 PERMIT 兜底；无任何命中默认拒绝。
         </p>
         {tradePolicies.length === 0 ? (
-          <p className="sub">暂无 TRADE 策略（可在「策略」Tab 录入）</p>
+          <div className="empty-state">暂无 TRADE 策略（可在「策略」Tab 录入）</div>
         ) : (
           <table className="pol-table">
             <thead>
@@ -261,7 +261,7 @@ export default function TradesPanel() {
         )}
         <h4 style={{ marginTop: 16 }}>最近成交</h4>
         {trades.length === 0 ? (
-          <p className="sub">暂无成交记录</p>
+          <div className="empty-state">暂无成交记录</div>
         ) : (
           <table className="cust-table">
             <thead>
@@ -301,7 +301,7 @@ export default function TradesPanel() {
           {!canReview && " 当前账号非 manager/admin，仅可查看。"}
         </p>
         {reviews.length === 0 ? (
-          <p className="sub">暂无复核任务</p>
+          <div className="empty-state">暂无复核任务</div>
         ) : (
           <table className="pol-table">
             <thead>

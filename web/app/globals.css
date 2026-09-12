@@ -5,13 +5,20 @@
   --muted: #6b7785;
   --line: #e3e8f0;
   --brand: #3b5bdb;
+  --brand-soft: #eef2ff;
   --brand-ink: #ffffff;
   --ok: #2f9e44;
   --ok-bg: #ebfbee;
   --no: #e03131;
   --no-bg: #fff5f5;
+  --warn: #b45309;
   --warn-bg: #fff9db;
   --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --ring: 0 0 0 3px rgba(59, 91, 219, 0.16);
 }
 
 * {
@@ -28,6 +35,8 @@ body {
     "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -35,7 +44,7 @@ a {
 }
 
 .app {
-  max-width: 980px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 24px 20px 60px;
 }
@@ -52,72 +61,155 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   padding: 14px 18px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
   margin-bottom: 18px;
 }
 .topbar .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
+  gap: 12px;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4263eb, #364fc7);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(54, 79, 199, 0.35);
+  flex-shrink: 0;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+.brand-text b {
   font-size: 15px;
 }
-.topbar .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--brand);
+.brand-sub {
+  font-size: 12px;
+  color: var(--muted);
 }
 .topbar .who {
-  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
 }
-.topbar .who b {
+.who-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.who-line b {
   color: var(--ink);
 }
+.chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  border: 1px solid #dfe6ff;
+}
+.chip.dim {
+  background: #f1f3f5;
+  color: #868e96;
+  border-color: #e9ecef;
+}
 
-/* 选项卡 */
+/* 选项卡：按「演示 / 业务 / 管理 / 参考」分组 */
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: 8px 4px;
   margin-bottom: 18px;
   flex-wrap: wrap;
+  align-items: center;
+}
+.tab-group {
+  display: inline-flex;
+  flex: 0 1 auto;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.tab-group-label {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 4px 0 8px;
+  letter-spacing: 0.08em;
+  user-select: none;
 }
 .tabs button {
-  border: 1px solid var(--line);
-  background: var(--panel);
+  border: none;
+  background: transparent;
   color: var(--muted);
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.15s;
 }
 .tabs button:hover {
-  border-color: var(--brand);
   color: var(--brand);
+  background: var(--brand-soft);
 }
 .tabs button.active {
   background: var(--brand);
-  border-color: var(--brand);
   color: var(--brand-ink);
+  box-shadow: 0 1px 4px rgba(59, 91, 219, 0.35);
 }
 
 /* 卡片 */
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
   padding: 18px 20px;
   margin-bottom: 16px;
 }
 .card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 4px;
   font-size: 16px;
+}
+.card h2::before,
+.card h3::before {
+  content: "";
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+.card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 15px;
 }
 .card .sub {
   color: var(--muted);
@@ -137,16 +229,20 @@ select {
   width: 100%;
   padding: 9px 11px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   background: #fff;
   color: var(--ink);
   outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 input:focus,
 select:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.12);
+  box-shadow: var(--ring);
+}
+input::placeholder {
+  color: #adb5bd;
 }
 .row {
   display: flex;
@@ -163,13 +259,20 @@ button.btn {
   background: var(--brand);
   color: var(--brand-ink);
   padding: 9px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  transition: filter 0.15s, box-shadow 0.15s, background 0.15s;
 }
 button.btn:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.06);
+}
+button.btn:focus-visible,
+button.link:focus-visible,
+.tabs button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
 }
 button.btn:disabled {
   opacity: 0.6;
@@ -196,6 +299,14 @@ button.ghost {
   border: 1px solid var(--line);
   background: #fff;
   color: var(--ink);
+}
+button.ghost:hover {
+  background: #f8f9fc;
+  filter: none;
+}
+button.btn-sm {
+  padding: 5px 9px;
+  font-size: 12px;
 }
 
 /* 客户表 */
@@ -226,6 +337,12 @@ button.ghost {
   color: var(--muted);
   font-weight: 600;
   background: #fafbfe;
+}
+.cust-table tbody tr {
+  transition: background 0.12s;
+}
+.cust-table tbody tr:hover {
+  background: #f8fafd;
 }
 .cust-table td.name {
   font-weight: 600;
@@ -416,6 +533,11 @@ button.link {
   background: var(--no-bg);
   color: var(--no);
   border: 1px solid #ffc9c9;
+}
+.verdict.review {
+  background: #fff7e6;
+  color: #b45309;
+  border: 1px solid #ffd591;
 }
 
 /* 登录页 */
@@ -743,6 +865,43 @@ button.link {
   color: var(--no);
   border-color: #ffc9c9;
 }
+.effect-review {
+  background: #fff7e6;
+  color: #b45309;
+  border-color: #ffd591;
+}
+.effect-approved {
+  background: #e6fcf5;
+  color: #087f5b;
+  border-color: #96f2d7;
+}
+
+/* 面板纵向容器（交易风控 / Agent 校验等复合面板） */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 空状态：无数据时的提示块 */
+.empty-state {
+  padding: 26px 16px;
+  text-align: center;
+  color: var(--muted);
+  background: #f8f9fc;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* 卡片内小标题 */
+.card h4 {
+  margin: 14px 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
 
 /* SpEL 条件：等宽 + 可断行，长表达式不至于撑破卡片 */
 .cond {
@@ -779,6 +938,12 @@ button.link {
   color: var(--muted);
   font-weight: 600;
   background: #fafbfe;
+}
+.pol-table tbody tr {
+  transition: background 0.12s;
+}
+.pol-table tbody tr:hover {
+  background: #f8fafd;
 }
 .pol-table td.code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -821,4 +986,52 @@ button.link {
   font-size: 12px;
   color: var(--muted);
   margin-right: 2px;
+}
+
+/* ================= 窄屏适配 ================= */
+@media (max-width: 560px) {
+  .app {
+    padding: 14px 10px 40px;
+  }
+  .tab-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .tab-group-label {
+    display: none;
+  }
+  .topbar .who {
+    align-items: flex-start;
+    width: 100%;
+  }
+  .who-line {
+    justify-content: flex-start;
+  }
+  /* 表格窄屏横向滚动，避免列被挤压 */
+  .card {
+    padding: 14px 12px;
+  }
+  .stat-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 细滚动条（WebKit） */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d0d6e0;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b6bdc9;
+  background-clip: content-box;
+  border: 2px solid transparent;
 }
