@@ -240,6 +240,16 @@ public class AuthGlobalFilter implements GlobalFilter {
                 }
                 yield new ActionMapping("TRADE", "POST".equals(method) ? "EXECUTE" : "LIST");
             }
+            case "agent" -> {
+                // /api/agent/tools（POST 工具调用 → TOOL/EXECUTE 网关兜底 P-15 放行，
+                // 细粒度工具域校验由 agent-service 按 WEB/EMAIL/... 再问 PDP）；
+                // /api/agent/reviews、/api/agent/session 只做基础门禁。
+                String sub = seg.length > 3 ? seg[3] : "";
+                if ("reviews".equalsIgnoreCase(sub) || "session".equalsIgnoreCase(sub)) {
+                    yield new ActionMapping("TOOL", "GET".equals(method) ? "LIST" : "EXECUTE");
+                }
+                yield new ActionMapping("TOOL", "POST".equals(method) ? "EXECUTE" : "LIST");
+            }
             default -> null; // me / decide：仅需登录
         };
     }

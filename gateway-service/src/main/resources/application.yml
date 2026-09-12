@@ -46,6 +46,11 @@ spring:
           uri: lb://risk-service
           predicates:
             - Path=/api/trades,/api/trades/**
+        # AI Agent 前置校验：工具调用门禁 + 复核任务 + 会话统计
+        - id: agent-tools
+          uri: lb://agent-service
+          predicates:
+            - Path=/api/agent,/api/agent/**
 
 management:
   endpoints:
