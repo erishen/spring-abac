@@ -230,6 +230,16 @@ public class AuthGlobalFilter implements GlobalFilter {
                 default -> "READ";
             });
             case "audit" -> new ActionMapping("AUDIT", isCollection ? "LIST" : "READ");
+            case "trades" -> {
+                // /api/trades（POST 下单 → EXECUTE，由 risk-service 调 PDP 做风控决策）；
+                // /api/trades/reviews/**（复核）与 /api/trades/stats 只做基础门禁，
+                // 复核的管理员权限在 risk-service 业务层校验（title ∈ manager/admin）。
+                String sub = seg.length > 3 ? seg[3] : "";
+                if ("reviews".equalsIgnoreCase(sub) || "stats".equalsIgnoreCase(sub)) {
+                    yield new ActionMapping("TRADE", "GET".equals(method) ? "LIST" : "EXECUTE");
+                }
+                yield new ActionMapping("TRADE", "POST".equals(method) ? "EXECUTE" : "LIST");
+            }
             default -> null; // me / decide：仅需登录
         };
     }

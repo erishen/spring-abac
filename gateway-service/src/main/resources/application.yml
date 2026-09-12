@@ -41,6 +41,11 @@ spring:
             # 仅放行 GET：审计写入由网关内部经服务发现直连（带私有头），外部无法伪造
             - Path=/api/audit,/api/audit/**
             - Method=GET
+        # 交易风控：下单前置校验 + 复核任务 + 当日累计统计
+        - id: risk-trades
+          uri: lb://risk-service
+          predicates:
+            - Path=/api/trades,/api/trades/**
 
 management:
   endpoints:
