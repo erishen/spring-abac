@@ -67,7 +67,7 @@ class AbacServiceTest {
         PolicyRepository repo = fakeRepository();
         AbacService svc = newService(repo);
         svc.seedIfEmpty();
-        assertThat(svc.listPolicies()).hasSize(24);
+        assertThat(svc.listPolicies()).hasSize(40);
 
         // 匿名主体读审计域：仅 admin 可见（P-40），未匹配任何 PERMIT → 默认拒绝
         AbacDtos.DecisionRequest req = new AbacDtos.DecisionRequest(

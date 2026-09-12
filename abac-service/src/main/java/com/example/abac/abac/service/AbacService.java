@@ -435,6 +435,58 @@ public class AbacService {
         save("P-12 交易兜底放行", "无风控规则命中时允许成交（DENY/REVIEW 规则在上层拦截）",
                 Effect.PERMIT, "TRADE", "EXECUTE", null, 12);
 
+        // ---- AI Agent 前置校验域（TOOL）：agent-service 在工具调用前问 PDP ----
+        // 资源类型是工具域（WEB/EMAIL/PAYMENT/FS/CODE），动作是工具操作（FETCH/SEND/...）。
+        save("P-99 群发邮件转人工复核", "单封邮件收件人超过 5 人转人工复核（防 Agent 批量骚扰）",
+                Effect.REVIEW, "EMAIL", "SEND", "resource.recipientCount > 5", 99);
+
+        save("P-95 外链域名白名单", "目标 URL 域名不在白名单内直接拒绝（防 SSRF/恶意外联）",
+                Effect.DENY, "WEB", "FETCH",
+                "resource.urlDomain != 'example.com' && resource.urlDomain != 'api.example.com' && resource.urlDomain != 'cnb.example.com'", 95);
+
+        save("P-92 会话外联次数上限", "同一会话累计外联超过 10 次拒绝（会话级状态累计）",
+                Effect.DENY, "WEB", "FETCH", "resource.sessionFetchCount > 10", 92);
+
+        save("P-90 大额转账转人工复核", "单笔转账超过 10000 转人工复核",
+                Effect.REVIEW, "PAYMENT", "TRANSFER", "resource.amount > 10000", 90);
+
+        save("P-85 工作区外禁止删除", "删除路径不在 /workspace 内直接拒绝",
+                Effect.DENY, "FS", "DELETE", "!resource.path.startsWith('/workspace')", 85);
+
+        save("P-80 危险命令禁止", "代码里出现 rm -rf 等危险删除命令直接拒绝（沙箱禁方法调用，用 matches 正则操作符检测）",
+                Effect.DENY, "CODE", "EXECUTE", "resource.code matches '.*rm -rf.*'", 80);
+
+        save("P-78 会话发信次数上限", "同一会话累计发信超过 20 封拒绝",
+                Effect.DENY, "EMAIL", "SEND", "resource.sessionSendCount > 20", 78);
+
+        save("P-75 疑似高危代码转复核", "代码里出现 ProcessBuild（进程启动类调用）转人工复核",
+                Effect.REVIEW, "CODE", "EXECUTE", "resource.code matches '.*ProcessBuild.*'", 75);
+
+        save("P-70 低信任 Agent 群发限制", "低信任 Agent 单封超过 3 个收件人直接拒绝",
+                Effect.DENY, "EMAIL", "SEND",
+                "subject.trust == 'low' && resource.recipientCount > 3", 70);
+
+        save("P-18 登录用户可查看工具调用", "工具调用记录对所有登录用户可见",
+                Effect.PERMIT, "TOOL", "LIST", null, 18);
+
+        save("P-15 工具调用网关兜底", "网关预裁兜底：细粒度工具校验由 agent-service 按工具域再问 PDP",
+                Effect.PERMIT, "TOOL", "EXECUTE", null, 15);
+
+        save("P-12 外联兜底放行", "白名单内的外联允许（白名单外已被 P-95 拦截）",
+                Effect.PERMIT, "WEB", "FETCH", null, 12);
+
+        save("P-08 发信兜底放行", "常规发信允许（群发/低信任已被上层拦截）",
+                Effect.PERMIT, "EMAIL", "SEND", null, 8);
+
+        save("P-06 转账兜底放行", "常规转账允许（超限已被 P-90 拦截）",
+                Effect.PERMIT, "PAYMENT", "TRANSFER", null, 6);
+
+        save("P-05 删除兜底放行", "工作区内删除允许（工作区外已被 P-85 拦截）",
+                Effect.PERMIT, "FS", "DELETE", null, 5);
+
+        save("P-04 代码执行兜底放行", "常规代码执行允许（危险调用已被 P-80/P-75 拦截）",
+                Effect.PERMIT, "CODE", "EXECUTE", null, 4);
+
         log.info("[abac] seeded {} demo policies (deny-override, default deny)", policyRepository.count());
         invalidatePolicies();
     }
