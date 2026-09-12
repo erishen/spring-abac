@@ -9,8 +9,9 @@ import SimulatorPanel from "@/components/SimulatorPanel";
 import DocumentsPanel from "@/components/DocumentsPanel";
 import UsersPanel from "@/components/UsersPanel";
 import AuditPanel from "@/components/AuditPanel";
+import GlossaryPanel from "@/components/GlossaryPanel";
 
-type Tab = "policies" | "simulator" | "documents" | "users" | "audit";
+type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "simulator", label: "裁决模拟" },
@@ -18,6 +19,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "policies", label: "策略" },
   { key: "users", label: "用户属性" },
   { key: "audit", label: "审计" },
+  { key: "dict", label: "字典" },
 ];
 
 export default function Home() {
@@ -81,6 +83,7 @@ export default function Home() {
       {tab === "policies" && <PoliciesPanel />}
       {tab === "users" && <UsersPanel />}
       {tab === "audit" && <AuditPanel />}
+      {tab === "dict" && <GlossaryPanel />}
     </div>
   );
 }
