@@ -903,6 +903,73 @@ button.link {
   font-weight: 600;
 }
 
+/* 预设场景：分组网格 + 效果色点 */
+.scenario-group {
+  margin-bottom: 12px;
+}
+.scenario-group-label {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+.scenario {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.scenario:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  box-shadow: 0 1px 4px rgba(59, 91, 219, 0.18);
+}
+.scenario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.scenario-label {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.scenario-expect {
+  font-size: 11px;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.exp-permit {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border-color: #b2f2bb;
+}
+.exp-deny {
+  background: var(--no-bg);
+  color: var(--no);
+  border-color: #ffc9c9;
+}
+.exp-review {
+  background: #fff7e6;
+  color: #b45309;
+  border-color: #ffd591;
+}
+
 /* SpEL 条件：等宽 + 可断行，长表达式不至于撑破卡片 */
 .cond {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
