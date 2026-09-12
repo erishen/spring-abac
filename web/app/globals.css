@@ -209,7 +209,7 @@ button.ghost {
 /* 固定列宽，避免长内容把操作列挤窄导致按钮换行。
    DocumentsPanel 的可见文档表：标题是主要阅读内容，给足空间；
    密级/操作列按内容量压缩。 */
-.cust-table > thead > tr > th:nth-child(1) { width: 24%; }
+.cust-table > thead > tr > th:nth-child(1) { width: 20%; }
 .cust-table > thead > tr > th:nth-child(2) { width: 13%; }
 .cust-table > thead > tr > th:nth-child(3) { width: 12%; }
 .cust-table > thead > tr > th:nth-child(4) { width: 12%; }
