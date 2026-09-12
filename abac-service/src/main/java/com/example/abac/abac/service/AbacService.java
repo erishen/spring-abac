@@ -13,6 +13,7 @@ import com.example.abac.abac.model.Policy;
 import com.example.abac.abac.repository.PolicyRepository;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,8 +62,9 @@ public class AbacService {
      * （任一策略都可能改变任一裁决），保证不出现陈旧决策。
      */
     private final Map<String, PolicyEngine.Decision> decisionCache = new ConcurrentHashMap<>();
-    private static final ObjectMapper KEY_MAPPER = new ObjectMapper()
-            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+    private static final ObjectMapper KEY_MAPPER = JsonMapper.builder()
+            .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+            .build();
 
     /**
      * 策略全表缓存：策略集合极少变动，裁决时直接复用，避免每次 decide 都 findAll() 打库

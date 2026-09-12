@@ -70,7 +70,9 @@ public class JwtUtil {
             throw new JwtException("bad signature");
         }
         try {
-            Map<String, Object> payload = mapper.readValue(fromB64(parts[1]), Map.class);
+            Map<String, Object> payload =
+                    mapper.readValue(fromB64(parts[1]), new TypeReference<Map<String, Object>>() {
+                    });
             Object exp = payload.get("exp");
             if (exp instanceof Number && ((Number) exp).longValue() * 1000 < System.currentTimeMillis()) {
                 throw new JwtException("token expired");
