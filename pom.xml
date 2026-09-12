@@ -28,6 +28,7 @@
         <module>gateway-service</module>
         <module>audit-service</module>
         <module>risk-service</module>
+        <module>agent-service</module>
     </modules>
 
     <properties>
