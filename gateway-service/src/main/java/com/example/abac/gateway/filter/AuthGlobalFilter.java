@@ -1,7 +1,9 @@
 package com.example.abac.gateway.filter;
 
-import com.example.abac.gateway.util.JwtException;
-import com.example.abac.gateway.util.JwtUtil;
+import com.example.abac.common.util.JwtException;
+import com.example.abac.common.util.JwtUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
@@ -42,6 +44,8 @@ import java.util.UUID;
 public class AuthGlobalFilter implements GlobalFilter {
 
     private static final Logger log = LoggerFactory.getLogger(AuthGlobalFilter.class);
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     /** 网关内部直连审计服务的私有头，audit-service 据此拒绝外部伪造写入。 */
     private static final String AUDIT_HEADER = "X-Internal-Audit";
@@ -282,11 +286,16 @@ public class AuthGlobalFilter implements GlobalFilter {
         return v == null ? "" : String.valueOf(v);
     }
 
+    /** 统一错误响应。用 ObjectMapper 序列化，避免手拼 JSON 遇到反斜杠/换行等字符时产出非法 JSON。 */
     private Mono<Void> writeJson(ServerWebExchange exchange, HttpStatus status, String message) {
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] body = ("{\"error\":\"" + message.replace("\"", "'") + "\"}")
-                .getBytes(StandardCharsets.UTF_8);
+        byte[] body;
+        try {
+            body = JSON.writeValueAsBytes(Map.of("error", message == null ? "" : message));
+        } catch (JsonProcessingException e) {
+            body = "{\"error\":\"internal error\"}".getBytes(StandardCharsets.UTF_8);
+        }
         return exchange.getResponse().writeWith(
                 Mono.just(exchange.getResponse().bufferFactory().wrap(body)));
     }
