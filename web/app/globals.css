@@ -970,6 +970,70 @@ button.link {
   border-color: #ffd591;
 }
 
+/* 扩展属性键值对编辑器 */
+.kv-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.kv-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kv-row input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.kv-key {
+  flex: 0 1 150px;
+}
+.kv-eq {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.kv-value {
+  flex: 1 1 auto;
+}
+.kv-del {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.kv-del:hover {
+  color: var(--no);
+  border-color: #ffc9c9;
+  background: var(--no-bg);
+}
+.kv-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  background: #f8f9fc;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+.kv-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.kv-quick {
+  width: auto;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
 /* SpEL 条件：等宽 + 可断行，长表达式不至于撑破卡片 */
 .cond {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

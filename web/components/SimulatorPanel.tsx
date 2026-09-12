@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { decide } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { DecisionRequest, DecisionResponse } from "@/lib/types";
@@ -18,6 +18,39 @@ const ACTIONS = [
   "SEND",
   "TRANSFER",
 ];
+
+/** 快捷添加的常用资源属性键，覆盖交易 / Agent 域的典型字段。 */
+const QUICK_KEYS = [
+  "amount",
+  "channel",
+  "region",
+  "urlDomain",
+  "code",
+  "recipientCount",
+  "sessionFetchCount",
+  "sessionSendCount",
+  "cumulativeAfter",
+  "path",
+];
+
+/** 键值对行：扩展属性编辑器的数据模型。 */
+interface KvRow {
+  id: number;
+  key: string;
+  value: string;
+  /** 快捷添加命中已有键时置 true，渲染后聚焦该行。 */
+  focus?: boolean;
+}
+
+/** 把用户输入的值转成后端能识别的类型：数字 / 布尔 / 字符串。 */
+function inferValue(s: string): unknown {
+  const t = s.trim();
+  if (t === "") return "";
+  if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t);
+  if (t === "true") return true;
+  if (t === "false") return false;
+  return t;
+}
 const CLASSIFICATIONS = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"];
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"];
 
@@ -212,8 +245,9 @@ export default function SimulatorPanel() {
   const [resDept, setResDept] = useState("ENG");
   const [classification, setClassification] = useState("INTERNAL");
   const [status, setStatus] = useState("DRAFT");
-  // 扩展属性：JSON 文本，解析后合并进 resource.attributes（交易金额 / 外链域名 / 代码内容等）
-  const [extraText, setExtraText] = useState("");
+  // 扩展属性：键值对行编辑器，合并进 resource.attributes（金额 / 外链域名 / 代码内容等）
+  const [extraRows, setExtraRows] = useState<KvRow[]>([]);
+  const kvId = useRef(0);
   const [action, setAction] = useState("READ");
 
   // 环境属性（默认取当前小时，可手工调到 20 试非工作时间删文档）
@@ -222,6 +256,42 @@ export default function SimulatorPanel() {
   const [result, setResult] = useState<DecisionResponse | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+
+  function addExtraRow(key = "", value = "") {
+    setExtraRows((rows) => [...rows, { id: kvId.current++, key, value }]);
+  }
+
+  function updateExtraRow(id: number, patch: Partial<KvRow>) {
+    setExtraRows((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  function removeExtraRow(id: number) {
+    setExtraRows((rows) => rows.filter((r) => r.id !== id));
+  }
+
+  /** 快捷下拉：已存在的键聚焦到其行，否则新增一行。 */
+  function addQuickKey(key: string) {
+    if (!key) return;
+    const existing = extraRows.find((r) => r.key.trim() === key);
+    if (existing) {
+      setExtraRows((rows) =>
+        rows.map((r) => (r.id === existing.id ? { ...r, focus: true } : r)),
+      );
+      return;
+    }
+    addExtraRow(key, "");
+  }
+
+  /** 行编辑器 → 属性包（数字/布尔自动转换）。 */
+  function rowsToAttrs(): Record<string, unknown> {
+    const attrs: Record<string, unknown> = {};
+    for (const r of extraRows) {
+      const k = r.key.trim();
+      if (!k) continue;
+      attrs[k] = inferValue(r.value);
+    }
+    return attrs;
+  }
 
   /** 点选预设场景：回填所有表单字段（供继续修改）并立即发起裁决。 */
   function applyScenario(sc: Scenario) {
@@ -238,7 +308,7 @@ export default function SimulatorPanel() {
     setStatus(String(sc.resource.status ?? "DRAFT"));
     setAction(sc.action);
     if (sc.envHour !== undefined) setEnvHour(sc.envHour);
-    // 表单固定字段之外的自定义属性（amount / urlDomain / code …）展示到扩展 JSON 里
+    // 表单固定字段之外的自定义属性（amount / urlDomain / code …）落到键值对编辑器里
     const {
       type: _t,
       owner: _o,
@@ -248,7 +318,9 @@ export default function SimulatorPanel() {
       status: _s,
       ...extra
     } = sc.resource;
-    setExtraText(Object.keys(extra).length ? JSON.stringify(extra, null, 2) : "");
+    setExtraRows(
+      Object.entries(extra).map(([k, v], i) => ({ id: kvId.current++, key: k, value: String(v) })),
+    );
     setResult(null);
     setErr("");
     void run(sc);
@@ -259,16 +331,6 @@ export default function SimulatorPanel() {
     setErr("");
     setBusy(true);
     try {
-      let extra: Record<string, unknown> = {};
-      if (!sc) {
-        try {
-          extra = extraText.trim() ? (JSON.parse(extraText) as Record<string, unknown>) : {};
-        } catch {
-          setErr("扩展属性 JSON 格式错误，请检查后重试");
-          setBusy(false);
-          return;
-        }
-      }
       const body: DecisionRequest = {
         subject: sc
           ? { ...sc.subject }
@@ -291,7 +353,7 @@ export default function SimulatorPanel() {
                 classification,
                 requiredClearance: REQUIRED[classification] ?? 1,
                 status,
-                ...extra,
+                ...rowsToAttrs(),
               },
         },
         action: sc ? sc.action : action,
@@ -452,15 +514,64 @@ export default function SimulatorPanel() {
         </div>
         <div className="field" style={{ marginTop: 4 }}>
           <label>
-            扩展属性 JSON（合并进 resource.attributes —— 金额、外链域名、代码内容等用这里）
+            扩展属性（键值对，合并进 resource.attributes —— 金额、外链域名、代码内容等）
           </label>
-          <textarea
-            rows={3}
-            value={extraText}
-            onChange={(e) => setExtraText(e.target.value)}
-            placeholder={'例如：{ "amount": 60000, "channel": "MOBILE", "region": "CN" }'}
-            style={{ fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12 }}
-          />
+          <div className="kv-editor">
+            {extraRows.length === 0 ? (
+              <div className="kv-empty">
+                暂无扩展属性。点「+ 添加属性」或从快捷下拉选择一个键（如 amount / urlDomain / code）。
+              </div>
+            ) : (
+              extraRows.map((row) => (
+                <div className="kv-row" key={row.id}>
+                  <input
+                    className="kv-key"
+                    placeholder="属性键"
+                    value={row.key}
+                    onChange={(e) => updateExtraRow(row.id, { key: e.target.value, focus: false })}
+                  />
+                  <span className="kv-eq">=</span>
+                  <input
+                    className="kv-value"
+                    placeholder="值（数字 / 文本 / true|false）"
+                    value={row.value}
+                    onChange={(e) => updateExtraRow(row.id, { value: e.target.value, focus: false })}
+                    ref={(el) => {
+                      if (el && row.focus) {
+                        el.focus();
+                        updateExtraRow(row.id, { focus: false });
+                      }
+                    }}
+                  />
+                  <button
+                    className="kv-del"
+                    onClick={() => removeExtraRow(row.id)}
+                    title="删除该属性"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="kv-actions">
+            <button className="btn btn-sm ghost" onClick={() => addExtraRow()} disabled={busy}>
+              + 添加属性
+            </button>
+            <select
+              className="kv-quick"
+              value=""
+              onChange={(e) => addQuickKey(e.target.value)}
+              disabled={busy}
+            >
+              <option value="">快捷添加…</option>
+              {QUICK_KEYS.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="row" style={{ marginTop: 6 }}>
