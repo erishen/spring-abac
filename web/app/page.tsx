@@ -11,12 +11,14 @@ import UsersPanel from "@/components/UsersPanel";
 import AuditPanel from "@/components/AuditPanel";
 import GlossaryPanel from "@/components/GlossaryPanel";
 import TradesPanel from "@/components/TradesPanel";
+import AgentPanel from "@/components/AgentPanel";
 
-type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict" | "trades";
+type Tab = "policies" | "simulator" | "documents" | "users" | "audit" | "dict" | "trades" | "agent";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "simulator", label: "裁决模拟" },
   { key: "trades", label: "交易风控" },
+  { key: "agent", label: "Agent 校验" },
   { key: "documents", label: "文档" },
   { key: "policies", label: "策略" },
   { key: "users", label: "用户属性" },
@@ -82,6 +84,7 @@ export default function Home() {
 
       {tab === "simulator" && <SimulatorPanel />}
       {tab === "trades" && <TradesPanel />}
+      {tab === "agent" && <AgentPanel />}
       {tab === "documents" && <DocumentsPanel />}
       {tab === "policies" && <PoliciesPanel />}
       {tab === "users" && <UsersPanel />}

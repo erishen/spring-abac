@@ -223,3 +223,60 @@ export interface TradeStats {
   limitAmount: number;
   limitCount: number | null;
 }
+
+// ---------------- AI Agent 前置校验（agent-service） ----------------
+
+export interface ToolCallRequest {
+  agentId: string;
+  trust: "high" | "medium" | "low";
+  toolType: string;
+  operation: string;
+  params: Record<string, unknown>;
+}
+
+export interface ToolExecution {
+  id: number;
+  username: string;
+  agentId: string;
+  toolType: string;
+  operation: string;
+  summary: string;
+  effect: string;
+  policyName: string;
+  createdAt: number;
+}
+
+export interface ToolResult {
+  effect: "PERMIT" | "DENY" | "REVIEW";
+  permitted: boolean;
+  policyName?: string | null;
+  reason?: string | null;
+  reviewId?: number | null;
+  message?: string | null;
+  execution?: ToolExecution | null;
+}
+
+export interface AgentReviewTask {
+  id: number;
+  username: string;
+  agentId: string;
+  toolType: string;
+  operation: string;
+  summary: string;
+  policyName: string;
+  createdAt: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  decidedBy?: string | null;
+  decidedAt?: number | null;
+}
+
+export interface SessionStats {
+  sessionId: string;
+  fetchCount: number;
+  sendCount: number;
+  transferCount: number;
+  executeCount: number;
+  deleteCount: number;
+  limitFetch: number;
+  limitSend: number;
+}

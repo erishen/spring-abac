@@ -1,4 +1,5 @@
 import type {
+  AgentReviewTask,
   AuditPage,
   AuditStats,
   CreateDocumentRequest,
@@ -9,7 +10,11 @@ import type {
   DocumentPage,
   PolicyDto,
   ReviewTask,
+  SessionStats,
   TokenResponse,
+  ToolCallRequest,
+  ToolExecution,
+  ToolResult,
   TradeExecution,
   TradeRequest,
   TradeResult,
@@ -194,3 +199,27 @@ export const approveReview = (id: number, token?: string) =>
 
 export const rejectReview = (id: number, token?: string) =>
   api<{ effect: string }>(`/api/trades/reviews/${id}/reject`, { method: "POST", token });
+
+// ---------------- AI Agent 前置校验（agent-service） ----------------
+
+export const checkTool = (body: ToolCallRequest, session: string, token?: string) =>
+  api<ToolResult>(`/api/agent/tools?session=${encodeURIComponent(session)}`, {
+    method: "POST",
+    body,
+    token,
+  });
+
+export const myTools = (token?: string) =>
+  api<ToolExecution[]>("/api/agent/tools", { token });
+
+export const agentSession = (session: string, token?: string) =>
+  api<SessionStats>(`/api/agent/session?session=${encodeURIComponent(session)}`, { token });
+
+export const listAgentReviews = (token?: string) =>
+  api<AgentReviewTask[]>("/api/agent/reviews", { token });
+
+export const approveAgentReview = (id: number, token?: string) =>
+  api<{ effect: string }>(`/api/agent/reviews/${id}/approve`, { method: "POST", token });
+
+export const rejectAgentReview = (id: number, token?: string) =>
+  api<{ effect: string }>(`/api/agent/reviews/${id}/reject`, { method: "POST", token });
