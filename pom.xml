@@ -27,6 +27,7 @@
         <module>document-service</module>
         <module>gateway-service</module>
         <module>audit-service</module>
+        <module>risk-service</module>
     </modules>
 
     <properties>

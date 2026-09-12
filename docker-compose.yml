@@ -121,6 +121,25 @@ services:
       - abac-service
       - document-service
       - audit-service
+      - risk-service
+
+  risk-service:
+    build:
+      context: .
+      dockerfile: risk-service/Dockerfile
+    image: spring-abac/risk-service:latest
+    container_name: abac-risk
+    expose:
+      - "4115"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8762/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: risk-service
+      CONFIG_SERVER_HOST: config-server
+    depends_on:
+      - eureka-server
+      - config-server
+      - abac-service
 
   web:
     build:
