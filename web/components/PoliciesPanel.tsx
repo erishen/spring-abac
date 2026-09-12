@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  ApiError,
   createPolicy,
   deletePolicy,
   listPolicies,
   updatePolicy,
 } from "@/lib/api";
+import { DeniedNote } from "@/components/DeniedNote";
 import { useAuth } from "@/lib/auth";
 import type { CreatePolicyRequest, Effect, PolicyDto } from "@/lib/types";
 
@@ -34,6 +36,7 @@ export default function PoliciesPanel() {
   const { token, user } = useAuth();
   const [items, setItems] = useState<PolicyDto[]>([]);
   const [err, setErr] = useState("");
+const [denied, setDenied] = useState(false);
   const [ok, setOk] = useState("");
   const [form, setForm] = useState<CreatePolicyRequest>(EMPTY);
   const [editing, setEditing] = useState<number | null>(null);
@@ -43,8 +46,11 @@ export default function PoliciesPanel() {
     try {
       setItems(await listPolicies(token));
       setErr("");
+      setDenied(false);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "加载策略失败");
+      const de = e instanceof ApiError && e.status === 403;
+      setDenied(de);
+      setErr(de ? "" : e instanceof Error ? e.message : "加载策略失败");
     }
   }, [token]);
 
@@ -211,7 +217,15 @@ export default function PoliciesPanel() {
       <div className="card">
         <h2>策略列表</h2>
         <p className="sub">按优先级从高到低排列；判定遇到 DENY 立即拒绝，不再看后面的 PERMIT。</p>
-        <table className="pol-table">
+        {denied ? (
+          <DeniedNote
+            policyRefs="POL-07 经理可列出策略 / POL-08 经理可查看策略"
+            reason="当前身份未命中任何 PERMIT，触发默认拒绝（default deny）；策略面只对 manager/admin 开放。"
+            suggest="切换 carol（manager）可只读查看全部策略；admin 还可增删改（POL-35 管理员可管理策略）。"
+            switchTo="carol"
+          />
+) : (
+<table className="pol-table">
           <thead>
             <tr>
               <th style={{ width: 40 }}>优先级</th>
@@ -305,6 +319,7 @@ export default function PoliciesPanel() {
             )}
           </tbody>
         </table>
+)}
       </div>
     </div>
   );

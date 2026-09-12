@@ -1504,3 +1504,44 @@ button.btn-sm.btn-danger {
 button.btn-sm.btn-danger:hover {
   background: #fff5f5;
 }
+
+/* ================= 权限不足说明卡（DeniedNote） ================= */
+.denied-note {
+  border: 1px solid #ffc9c9;
+  border-left: 4px solid #e03131;
+  background: #fff5f5;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #5f3dc4;
+  color: #364fc7;
+}
+.denied-note .denied-title {
+  font-weight: 700;
+  color: #c92a2a;
+  font-size: 14px;
+}
+.denied-note .denied-line {
+  display: flex;
+  gap: 10px;
+  line-height: 1.6;
+}
+.denied-note .denied-line b {
+  flex-shrink: 0;
+  min-width: 44px;
+  color: #c92a2a;
+  font-weight: 600;
+}
+button.denied-switch {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: #e03131;
+  border: 1px solid #e03131;
+  color: #fff;
+}
+button.denied-switch:hover {
+  filter: brightness(1.08);
+}

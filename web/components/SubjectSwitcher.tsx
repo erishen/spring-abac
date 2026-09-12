@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { clearanceLabel } from "@/lib/clearance";
-
-/** 演示账号：属性差异明显，切换即换主体（token + 主体属性），配合裁决模拟/业务面板看同策略的不同结果。 */
-const DEMO_ACCOUNTS: { username: string; password: string; tag: string; note: string }[] = [
-  { username: "admin", password: "admin123", tag: "EXEC · 绝密 5 · CN", note: "全通" },
-  { username: "carol", password: "carol123", tag: "ENG · 机密 4 · US", note: "境外地区" },
-  { username: "alice", password: "alice123", tag: "ENG · 受限 3 · CN", note: "普通工程师" },
-  { username: "bob", password: "bob123", tag: "SALES · 内部 2 · CN", note: "跨部门低密级" },
-];
+import { DEMO_ACCOUNTS } from "@/lib/demo-accounts";
 
 /** 顶栏当前主体：完整属性 + 演示身份一键切换。 */
 export function SubjectSwitcher() {

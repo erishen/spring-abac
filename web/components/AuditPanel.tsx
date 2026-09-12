@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getAuditStats, listAudit } from "@/lib/api";
+import { ApiError, getAuditStats, listAudit } from "@/lib/api";
+import { DeniedNote } from "@/components/DeniedNote";
 import { useAuth } from "@/lib/auth";
 import type { AuditPage, AuditStats } from "@/lib/types";
 
@@ -14,6 +15,7 @@ export default function AuditPanel() {
   const [decision, setDecision] = useState("");
   const [actor, setActor] = useState("");
   const [err, setErr] = useState("");
+const [denied, setDenied] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -30,8 +32,11 @@ export default function AuditPanel() {
       setPage(pg);
       setStats(st);
       setErr("");
+      setDenied(false);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "加载审计失败");
+      const de = e instanceof ApiError && e.status === 403;
+      setDenied(de);
+      setErr(de ? "" : e instanceof Error ? e.message : "加载审计失败");
     }
   }, [token, p, size, decision, actor]);
 
@@ -90,7 +95,15 @@ export default function AuditPanel() {
 
       <div className="card">
         <h2>审计流水</h2>
-        <table className="pol-table">
+        {denied ? (
+          <DeniedNote
+            policyRefs="AUD-38 仅管理员可列出审计 / AUD-40 仅管理员可查看审计日志"
+            reason="审计面只对 title=admin 开放，当前身份被默认拒绝（default deny）。"
+            suggest="切换 admin（admin/admin123）可查看完整审计流水与统计。"
+            switchTo="admin"
+          />
+) : (
+<table className="pol-table">
           <thead>
             <tr>
               <th style={{ width: 150 }}>时间</th>
@@ -141,6 +154,7 @@ export default function AuditPanel() {
             )}
           </tbody>
         </table>
+)}
 
         <div className="pager">
           <button

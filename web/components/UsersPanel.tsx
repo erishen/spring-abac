@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { listUsers, updateUserAttributes } from "@/lib/api";
+import { ApiError, listUsers, updateUserAttributes } from "@/lib/api";
+import { DeniedNote } from "@/components/DeniedNote";
 import { useAuth } from "@/lib/auth";
 import type { UserDto } from "@/lib/types";
 import { AttrBar } from "./AttrBar";
@@ -11,6 +12,7 @@ export default function UsersPanel() {
   const { token, user } = useAuth();
   const [items, setItems] = useState<UserDto[]>([]);
   const [err, setErr] = useState("");
+const [denied, setDenied] = useState(false);
   const [ok, setOk] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState({
@@ -25,8 +27,11 @@ export default function UsersPanel() {
     try {
       setItems(await listUsers(token));
       setErr("");
+      setDenied(false);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "加载用户失败");
+      const de = e instanceof ApiError && e.status === 403;
+      setDenied(de);
+      setErr(de ? "" : e instanceof Error ? e.message : "加载用户失败");
     }
   }, [token]);
 
@@ -64,7 +69,15 @@ export default function UsersPanel() {
         {err && <div className="err">{err}</div>}
         {ok && <div className="ok">{ok}</div>}
 
-        <table className="pol-table">
+        {denied ? (
+          <DeniedNote
+            policyRefs="USR-24 管理员/经理可列出用户 / USR-25 管理员/经理可查看用户属性"
+            reason="当前身份非 manager/admin，未命中任何 PERMIT，触发默认拒绝（default deny）。"
+            suggest="切换 carol（manager）或 admin 可查看用户与属性；仅 admin 可修改属性（USR-60 仅管理员可修改用户属性）。"
+            switchTo="carol"
+          />
+) : (
+<table className="pol-table">
           <thead>
             <tr>
               <th>用户名</th>
@@ -115,6 +128,7 @@ export default function UsersPanel() {
             )}
           </tbody>
         </table>
+)}
       </div>
 
       {editing && (

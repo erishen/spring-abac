@@ -240,7 +240,8 @@ export default function DocumentsPanel() {
             {(page?.content.length ?? 0) === 0 && (
               <tr>
                 <td colSpan={6} className="meta">
-                  当前主体看不到任何文档（或还没播种）
+                  当前主体看不到任何文档：可能被 DOC-90 密级不足 / DOC-95 境外禁读机密 /
+                  DOC-20 跨部门挡住，或确实无数据。切换 admin（全通）可确认是否权限原因。
                 </td>
               </tr>
             )}
