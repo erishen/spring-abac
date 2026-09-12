@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -42,6 +43,7 @@ public class PolicyEngine {
 
     private static final int MAX_EXPRESSION_LENGTH = 1000;
     private static final int MAX_CACHE_SIZE = 512;
+    private static final String DEFAULT_CLIENT_IP = "127.0.0.1";
 
     /**
      * 表达式黑名单（正则）。策略表达式由管理员录入（可信输入），但仍做纵深防御：
@@ -90,8 +92,7 @@ public class PolicyEngine {
                              Map<String, Object> environment) {
         Map<String, Object> subj = subject == null ? Map.of() : subject;
         Map<String, Object> res = resource == null ? Map.of() : resource;
-        Map<String, Object> env = environment == null || environment.isEmpty()
-                ? defaultEnvironment() : environment;
+        Map<String, Object> env = resolveEnvironment(environment);
         String act = action == null ? "" : action.trim().toUpperCase();
         String resourceType = res.get("type") == null ? "" : String.valueOf(res.get("type"));
 
@@ -204,7 +205,12 @@ public class PolicyEngine {
 
         StandardEvaluationContext ctx = new StandardEvaluationContext(root);
         // 属性访问只走 MapPropertyAccessor：表达式能读到的只有这三个属性包里的键。
-        ctx.addPropertyAccessor(new MapPropertyAccessor());
+        // setPropertyAccessors 显式替换默认的 ReflectivePropertyAccessor——否则属性包一旦
+        // 混入 POJO，表达式仍可经反射读其 getter（只读、无方法调用，但违背"只能读 Map 键"的承诺）。
+        ctx.setPropertyAccessors(List.of(new MapPropertyAccessor()));
+        // 彻底禁方法调用：移除所有 MethodResolver，表达式只能读属性、做比较，
+        // 即使属性值是对象也调不到它的任何方法（堵死反射/RCE 面）。属性只读访问不受影响。
+        ctx.setMethodResolvers(Collections.emptyList());
         // 硬性封死类型引用（T(...) 与 new Xxx() 都经此解析），黑名单之外的最后一道闸。
         ctx.setTypeLocator(typeName -> {
             throw new SpelEvaluationException(SpelMessage.TYPE_NOT_FOUND, typeName);
@@ -213,12 +219,17 @@ public class PolicyEngine {
     }
 
     /** 缺省环境属性：调用方未显式提供时，按服务本地时间补齐。 */
-    private Map<String, Object> defaultEnvironment() {
+    private static Map<String, Object> defaultEnvironment() {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> env = new HashMap<>();
         env.put("hour", now.getHour());
         env.put("dayOfWeek", now.getDayOfWeek().name());
-        env.put("ip", "127.0.0.1");
+        env.put("ip", DEFAULT_CLIENT_IP);
         return env;
+    }
+
+    /** 解析有效环境属性：调用方未提供时按本地时间补齐。供 evaluate 与缓存 key 复用，确保一致。 */
+    public static Map<String, Object> resolveEnvironment(Map<String, Object> environment) {
+        return (environment == null || environment.isEmpty()) ? defaultEnvironment() : environment;
     }
 }

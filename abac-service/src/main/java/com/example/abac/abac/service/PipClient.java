@@ -50,7 +50,7 @@ public class PipClient {
             log.debug("PIP fetched DOCUMENT#{} -> {}", id, attrs.keySet());
             return attrs;
         } catch (PipException e) {
-            throw e;
+            throw e; // 内部已带具体原因（如空响应），直接透传，避免被下面再包一层 "PIP lookup failed"
         } catch (Exception e) {
             throw new PipException("PIP lookup failed for DOCUMENT#" + id + ": " + e.getMessage());
         }
