@@ -103,7 +103,7 @@ public class PolicyEngine {
                 .filter(p -> p != null && p.isEnabled())
                 .filter(p -> scopeMatches(p.getResourceType(), resourceType))
                 .filter(p -> scopeMatches(p.getAction(), act))
-                .sorted(Comparator.comparingInt(Policy::getPriority).reversed())
+                .sorted(Comparator.comparingInt((@NonNull Policy p) -> p.getPriority()).reversed())
                 .toList();
 
         List<TraceEntry> trace = new ArrayList<>();

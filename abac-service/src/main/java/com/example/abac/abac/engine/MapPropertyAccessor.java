@@ -34,7 +34,11 @@ public class MapPropertyAccessor implements PropertyAccessor {
     @NonNull
     public TypedValue read(@NonNull EvaluationContext context, @Nullable Object target,
                            @NonNull String name) {
-        Map<?, ?> map = (Map<?, ?>) target;
+        // target 由 canRead 保证是 Map；JDT 不做跨方法分析，这里用 pattern 匹配
+        // 让编译器确认 map 非空（理论上到不了 NULL 分支，防御性兜底）。
+        if (!(target instanceof Map<?, ?> map)) {
+            return TypedValue.NULL;
+        }
         return new TypedValue(map.get(name));
     }
 
