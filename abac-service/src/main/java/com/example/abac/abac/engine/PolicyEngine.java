@@ -188,7 +188,7 @@ public class PolicyEngine {
         if (expressionCache.size() > MAX_CACHE_SIZE) {
             expressionCache.clear(); // 简易容量保护，避免策略被反复改写导致无限增长
         }
-        return expressionCache.computeIfAbsent(condition, c -> {
+        return expressionCache.computeIfAbsent(condition, (@NonNull String c) -> {
             validate(c);
             return parser.parseExpression(c);
         });
@@ -227,9 +227,19 @@ public class PolicyEngine {
         ctx.setMethodResolvers(new ArrayList<>());
         // 硬性封死类型引用（T(...) 与 new Xxx() 都经此解析），黑名单之外的最后一道闸。
         ctx.setTypeLocator(typeName -> {
-            throw new SpelEvaluationException(SpelMessage.TYPE_NOT_FOUND, typeName);
+            throw typeNotFound(typeName);
         });
         return ctx;
+    }
+
+    /**
+     * 类型不存在的求值异常。不走 SpelMessage.TYPE_NOT_FOUND 常量直引：
+     * 静态字段的 null 状态 JDT 无法证明（@NonNullApi 包下构造器参数隐式 @NonNull，
+     * 直引会触发 "needs unchecked conversion"）；valueOf 是方法调用，返回值可静态
+     * 推断非空，两个编译器（ecj 3.46 / JDT LS 3.47）都不报。
+     */
+    private static SpelEvaluationException typeNotFound(String typeName) {
+        return new SpelEvaluationException(SpelMessage.valueOf("TYPE_NOT_FOUND"), typeName);
     }
 
     /** 缺省环境属性：调用方未显式提供时，按服务本地时间补齐。 */
