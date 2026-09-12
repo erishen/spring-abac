@@ -201,6 +201,11 @@ GET /api/documents      │  JWT ✓  →  映射 (DOCUMENT, READ)  →  问 PDP
 网关侧熔断打开 → 直接 403；业务服务侧调用异常 → 抛 `ForbiddenException`。
 宁可拒绝也不能放行，这是授权系统的底线。
 
+**同样的两道闸门也覆盖风控与 Agent 域**：`risk-service`（下单预裁）与
+`agent-service`（工具预裁）各自持有一个 `AbacClient`，与 document 完全同款——
+网关按 URL 裁第一道，服务内带完整资源属性（金额/工具参数/会话计数）裁第二道；
+命中 REVIEW 时不是直接放行，而是落成本服务的人工复核队列，批准后才生效。
+
 ## 7. 熔断与降级
 
 网关对 PDP 的调用挂了 Resilience4j 熔断器（`abac-decide` 实例）：
@@ -265,6 +270,22 @@ append-only：只有写入端点（带网关私有头 `X-Internal-Audit`，外�
 差异集中在"判定"这一层，也正是 ABAC 的价值所在。
 
 ## 11. 生产化清单
+
+## 12. 测试与质量保障
+
+| 模块 | 用例 | 覆盖点 |
+|---|---|---|
+| abac-service | 15 | 策略引擎：deny-override / REVIEW 三态合并、优先级、作用域过滤、SpEL 沙箱黑名单、表达式缓存、PIP fail-closed |
+| document-service | 23 | 行级过滤、缺裁决按不可见、分页边界、对象级校验、PDP 不可用 fail-closed、客户端解析与批量映射 |
+| gateway-service | 7 | PEP 认证边界：公开路由放行、/api 无 token / 伪 token 一律 401 |
+| auth-service | 4 | 全局异常处理 |
+| risk-service | 3 | 交易风控：单笔大额 REVIEW、当日累计、fail-closed |
+| agent-service | 4 | Agent 预裁：外链白名单、危险命令、会话计数、fail-closed |
+
+共 56 个用例，`make test` 或 `mvn test` 全量运行。
+关键安全链路的回归保护是刻意安排的：**PEP 认证边界（gateway）→ PDP 裁决契约
+（AbacClient）→ 行级过滤（DocumentService）→ fail-closed（PdpUnavailableException）**
+每一环都有测试，改策略语义或接入新域时不至于悄悄破坏安全边界。
 
 演示项目的简化之处，真要上生产需要补齐：
 

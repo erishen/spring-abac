@@ -44,7 +44,7 @@ WEB_BACKEND ?= http://localhost:4110
 # 剥掉 NODE_OPTIONS 再跑 npm：注入型 NODE_OPTIONS（沙箱 fs shim / --use-system-ca 等）
 # 会让 Next 构建/worker 起不来（实测 next build 报 mkdir EEXIST、Turbopack Worker 挂）。
 NPM         := env -u NODE_OPTIONS npm
-# make start/stop 是否带前端；WITH_WEB=0 则只跑后端七服务
+# make start/stop 是否带前端；WITH_WEB=0 则只跑后端九服务
 # （注意：变量值行不要写行尾注释，make 会把注释前的空格算进变量值）
 WITH_WEB    ?= 1
 # 递归调用自身时用 $(SUBMAKE) 而非 $(MAKE)：GNU make 把含字面量 $(MAKE) 的命令行当作递归行，
@@ -62,7 +62,7 @@ help: ## 显示本帮助
 	@echo ""
 	@echo "  make build     编译打包，生成九个可执行 jar（mvn package -DskipTests）"
 	@echo "  make compile   仅编译（不打包）"
-	@echo "  make test      跑单测（含 abac-service 策略引擎 PolicyEngineTest）"
+	@echo "  make test      跑全部单测（六模块 56 个用例）"
 	@echo "  make start     后台启动九服务（eureka→config→auth/abac/document/audit/risk/agent/gateway）+ 前端 :3001"
 	@echo "  make dev       重新编译并后台启动（改码后用）"
 	@echo "  make stop      停止全部后台服务（含前端）"
@@ -101,10 +101,10 @@ build: ## 编译打包，生成九个可执行 jar
 compile: ## 仅编译（不打包）
 	$(MVN) -q compile
 
-test: ## 跑单测（策略引擎 deny-override / SpEL 沙箱 / PIP）
+test: ## 跑全部单测（PDP 引擎 / 行级过滤 / PEP 认证边界 / 风控 / Agent）
 	$(MVN) test
 
-start: ## 后台启动七服务 + 前端，等待就绪
+start: ## 后台启动九服务 + 前端，等待就绪
 	@if [ ! -f $(EUREKA_JAR) ] || [ ! -f $(CONFIG_JAR) ] || [ ! -f $(GW_JAR) ] || [ ! -f $(AUTH_JAR) ] || [ ! -f $(ABAC_JAR) ] || [ ! -f $(DOC_JAR) ] || [ ! -f $(AUDIT_JAR) ] || [ ! -f $(RISK_JAR) ] || [ ! -f $(AGENT_JAR) ]; then echo "jar 缺失，先编译..."; $(SUBMAKE) build; fi
 	@mkdir -p $(LOG_DIR) $(PID_DIR)
 	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(EUREKA_JAR) > $(LOG_DIR)/eureka.log 2>&1 & echo $$! > $(PID_DIR)/eureka.pid
@@ -224,7 +224,7 @@ web-killport: ## 强制释放前端端口（杀掉占用 WEB_PORT 的任意进�
 
 web-restart: web-stop web-start ## 重启前端
 
-status: ## 检查七个后端服务 + 前端的健康/可达状态
+status: ## 检查九个后端服务 + 前端的健康/可达状态
 	@for spec in "8762 GET /eureka/apps" "8889 GET /actuator/health" "4110 GET /health" "4111 POST /api/login" "4112 GET /api/policies" "4113 GET /api/documents" "4114 GET /api/audit" "4115 GET /api/trades/reviews" "4116 GET /api/agent/reviews" "$(WEB_PORT) GET /login"; do \
 	   port=$$(echo $$spec | cut -d' ' -f1); \
 	   method=$$(echo $$spec | cut -d' ' -f2); \

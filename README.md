@@ -15,7 +15,7 @@ ABAC：  (主体属性, 资源属性, 环境属性) ──策略表达式──>
 
 ```bash
 make build     # 编译打包九个 jar（首次约 2-3 分钟）
-make start     # 后台启动七服务 + 前端，等待就绪
+make start     # 后台启动九服务 + 前端，等待就绪
 make status    # 检查各服务可达性
 make demo      # 端到端演示（纯 curl，看裁决如何随属性变化）
 ```
@@ -146,17 +146,25 @@ make k3s-demo      # 端口转发网关到 41100 后跑演示
 ## 测试
 
 ```bash
-make test          # 或 mvn test
+make test          # 或 mvn test（全模块，56 个用例）
 ```
 
-`abac-service` 的 `PolicyEngineTest` 覆盖 11 个用例：deny-override 合并、优先级排序、
-作用域过滤、SpEL 沙箱黑名单、表达式缓存、环境属性默认值等。
+| 模块 | 用例 | 覆盖点 |
+|---|---|---|
+| abac-service | 15 | 策略引擎：deny-override 合并、优先级排序、作用域过滤、SpEL 沙箱黑名单、表达式缓存、REVIEW 三态合并、PIP fail-closed |
+| document-service | 23 | 行级过滤（只放行 PDP 同意的行）、缺裁决按不可见、分页边界、对象级校验、PDP 不可用 fail-closed、PDP 客户端解析与批量映射 |
+| gateway-service | 7 | PEP 认证边界：公开路由放行、/api 无 token / 伪 token 一律 401 |
+| auth-service | 4 | 全局异常处理 |
+| risk-service | 3 | 交易风控：单笔大额 REVIEW、当日累计、fail-closed |
+| agent-service | 4 | Agent 预裁：外链白名单、危险命令、会话计数、fail-closed |
+
+关键安全链路（PEP 认证 → PDP 裁决 → 行级过滤 → fail-closed）都有回归测试保护。
 
 ## 目录结构
 
 ```
 spring-abac/
-├── pom.xml                 # 父 POM（7 模块，Spring Boot 3.2.5 / Cloud 2023.0.3）
+├── pom.xml                 # 父 POM（9 模块，Spring Boot 3.2.5 / Cloud 2023.0.3）
 ├── eureka-server/          # 8762
 ├── config-server/          # 8889 + config-repo/*.yml
 ├── gateway-service/        # 4110  PEP
@@ -164,6 +172,8 @@ spring-abac/
 ├── abac-service/           # 4112  PDP + SpEL 引擎 + PIP
 ├── document-service/       # 4113  业务域 + 行级过滤
 ├── audit-service/          # 4114  审计
+├── risk-service/           # 4115  交易风控（下单预裁 + REVIEW 人工复核）
+├── agent-service/          # 4116  Agent 前置校验（工具预裁 + REVIEW 人工复核）
 ├── web/                    # 3001  Next.js
 ├── scripts/demo.sh         # 端到端 curl 演示
 ├── docker-compose.yml
