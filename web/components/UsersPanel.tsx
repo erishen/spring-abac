@@ -48,7 +48,7 @@ export default function UsersPanel() {
     }
   }
 
-  // 改属性 = 改权限，只放开 admin（与后端 P-60 一致，避免点了才 403）
+  // 改属性 = 改权限，只放开 admin（与后端 USR-60 一致，避免点了才 403）
   const canEdit = user?.title === "admin";
 
   return (

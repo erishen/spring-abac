@@ -287,8 +287,8 @@ export default function DocumentsPanel() {
       <div className="card">
         <h2>当前生效的文档策略（DOCUMENT 域）</h2>
         <p className="sub">
-          列表页的行级可见性由 P-90 / P-95 / P-20 等逐行裁决决定；写操作（CREATE / PUBLISH / DELETE）
-          走 P-12 / P-15 / P-05 / P-100。按优先级从高到低求值，DENY 短路（deny-override），
+          列表页的行级可见性由 DOC-90 / DOC-95 / DOC-20 等逐行裁决决定；写操作（CREATE / PUBLISH / DELETE）
+          走 DOC-12 / DOC-15 / DOC-05 / DOC-100。按优先级从高到低求值，DENY 短路（deny-override），
           都不中默认拒绝。
         </p>
         {docPolicies.length === 0 ? (

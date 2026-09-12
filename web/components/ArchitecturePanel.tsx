@@ -143,9 +143,9 @@ export default function ArchitecturePanel() {
             <div>
               <b>PDP：策略引擎求值（这是唯一的决策点）</b>
               <p>
-                按优先级从高到低逐条求值：P-100 非工作时段？P-95 境外？P-90 密级不足？……
+                按优先级从高到低逐条求值：DOC-100 非工作时段？DOC-95 境外？DOC-90 密级不足？……
                 命中 DENY 立即短路返回 DENY；命中 PERMIT 返回 PERMIT；全部不中默认拒绝。
-                这次请求命中 P-05 管理员全权 → PERMIT。
+                这次请求命中 DOC-05 管理员全权 → PERMIT。
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function ArchitecturePanel() {
           </div>
           <div className="arch-comp">
             <b className="arch-comp-name">PAP · 策略管理点</b>
-            <span>「管理 → 策略」页（admin 增删改，P-35）+ 启动种子 40 条。改这里立刻影响所有裁决（版本缓存失效）。</span>
+            <span>「管理 → 策略」页（admin 增删改，POL-35）+ 启动种子 40 条。改这里立刻影响所有裁决（版本缓存失效）。</span>
           </div>
           <div className="arch-comp">
             <b className="arch-comp-name">PIP · 策略信息点</b>
@@ -229,19 +229,19 @@ export default function ArchitecturePanel() {
           <div className="arch-compare-col">
             <h4>文档（document :4113）</h4>
             <p className="arch-compare-row"><b>注入</b>owner / department / classification / requiredClearance</p>
-            <p className="arch-compare-row"><b>特点</b>列表逐行批量裁决；行级可见性由 P-90 / P-95 / P-20 把关</p>
+            <p className="arch-compare-row"><b>特点</b>列表逐行批量裁决；行级可见性由 DOC-90 / DOC-95 / DOC-20 把关</p>
             <p className="arch-compare-row"><b>REVIEW</b>当前无文档 REVIEW 策略（全 DENY/PERMIT）</p>
           </div>
           <div className="arch-compare-col">
             <h4>交易风控（risk :4115）</h4>
             <p className="arch-compare-row"><b>注入</b>amount / channel / region + 当日累计 cumulativeAfter</p>
-            <p className="arch-compare-row"><b>特点</b>内存状态累计；P-80 累计超 10 万拒、P-85 大额转复核</p>
+            <p className="arch-compare-row"><b>特点</b>内存状态累计；TRD-80 累计超 10 万拒、TRD-85 大额转复核</p>
             <p className="arch-compare-row"><b>REVIEW</b>批准才计入当日累计（状态一致性）</p>
           </div>
           <div className="arch-compare-col">
             <h4>Agent 校验（agent :4116）</h4>
             <p className="arch-compare-row"><b>注入</b>agentId/trust + 工具参数 + 会话计数（sessionFetchCount 等）</p>
-            <p className="arch-compare-row"><b>特点</b>16 条工具域策略；P-95 白名单 / P-80 危险命令 / P-75 转复核</p>
+            <p className="arch-compare-row"><b>特点</b>16 条工具域策略；WEB-95 白名单 / COD-80 危险命令 / COD-75 转复核</p>
             <p className="arch-compare-row"><b>REVIEW</b>批准才执行并计入会话次数</p>
           </div>
         </div>

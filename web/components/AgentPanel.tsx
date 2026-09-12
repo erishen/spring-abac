@@ -35,11 +35,11 @@ const TOOLS: { key: ToolKind; label: string }[] = [
 ];
 
 const HINTS: Record<ToolKind, string> = {
-  "WEB:FETCH": "白名单域名 example.com / api.example.com / cnb.example.com；其他域名被 P-95 拒绝；同会话外联超 10 次被 P-92 拒绝",
-  "EMAIL:SEND": "收件人 > 5 → P-99 复核；低信任 Agent > 3 → P-70 拒绝；同会话发信超 20 → P-78 拒绝",
-  "PAYMENT:TRANSFER": "金额 > 10000 → P-90 复核",
-  "FS:DELETE": "路径不在 /workspace 内 → P-85 拒绝",
-  "CODE:EXECUTE": "含 rm -rf（危险删除命令）→ P-80 拒绝；含 ProcessBuild（进程启动）→ P-75 复核",
+  "WEB:FETCH": "白名单域名 example.com / api.example.com / cnb.example.com；其他域名被 WEB-95 拒绝；同会话外联超 10 次被 WEB-92 拒绝",
+  "EMAIL:SEND": "收件人 > 5 → EML-99 复核；低信任 Agent > 3 → EML-70 拒绝；同会话发信超 20 → EML-78 拒绝",
+  "PAYMENT:TRANSFER": "金额 > 10000 → PAY-90 复核",
+  "FS:DELETE": "路径不在 /workspace 内 → FS-85 拒绝",
+  "CODE:EXECUTE": "含 rm -rf（危险删除命令）→ COD-80 拒绝；含 ProcessBuild（进程启动）→ COD-75 复核",
 };
 
 /**
@@ -314,7 +314,7 @@ export default function AgentPanel() {
         <h3>会话统计（内存状态，重启清零）</h3>
         <p className="sub">
           同会话的工具调用次数作为资源属性（sessionFetchCount 等）参与裁决：
-          外联超 10 次 → P-92 拒绝，发信超 20 封 → P-78 拒绝。
+          外联超 10 次 → WEB-92 拒绝，发信超 20 封 → EML-78 拒绝。
         </p>
         {stats && (
           <table className="cust-table">

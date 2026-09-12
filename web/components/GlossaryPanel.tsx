@@ -273,49 +273,49 @@ export default function GlossaryPanel() {
           </thead>
           <tbody>
             <tr>
-              <td className="name">P-100</td>
+              <td className="name">DOC-100</td>
               <td>DENY</td>
               <td>DOCUMENT / DELETE</td>
               <td>env.hour &lt; 9 || env.hour &gt;= 18（非工作时间禁删）</td>
               <td>100</td>
             </tr>
             <tr>
-              <td className="name">P-95</td>
+              <td className="name">DOC-95</td>
               <td>DENY</td>
               <td>DOCUMENT / READ</td>
               <td>classification==CONFIDENTIAL &amp;&amp; region != CN（境外禁读机密）</td>
               <td>95</td>
             </tr>
             <tr>
-              <td className="name">P-90</td>
+              <td className="name">DOC-90</td>
               <td>DENY</td>
               <td>DOCUMENT / READ</td>
               <td>subject.clearance &lt; resource.requiredClearance（密级不够）</td>
               <td>90</td>
             </tr>
             <tr>
-              <td className="name">P-30</td>
+              <td className="name">DOC-30</td>
               <td>PERMIT</td>
               <td>DOCUMENT / READ</td>
               <td>resource.classification == PUBLIC（公开文档人人可读）</td>
               <td>30</td>
             </tr>
             <tr>
-              <td className="name">P-20</td>
+              <td className="name">DOC-20</td>
               <td>PERMIT</td>
               <td>DOCUMENT / READ</td>
               <td>resource.department == subject.department（同部门）</td>
               <td>20</td>
             </tr>
             <tr>
-              <td className="name">P-10</td>
+              <td className="name">DOC-10</td>
               <td>PERMIT</td>
               <td>DOCUMENT / *</td>
               <td>resource.owner == subject.username（本人文档）</td>
               <td>10</td>
             </tr>
             <tr>
-              <td className="name">P-05</td>
+              <td className="name">DOC-05</td>
               <td>PERMIT</td>
               <td>DOCUMENT / *</td>
               <td>subject.title == admin（管理员放行，仍受 DENY 约束）</td>
@@ -361,7 +361,7 @@ export default function GlossaryPanel() {
       <div className="card">
         <h2>密级与 clearance</h2>
         <p className="sub">
-          文档密级映射到所需 clearance，策略 P-90 据此挡人；改用户 clearance
+          文档密级映射到所需 clearance，策略 DOC-90 据此挡人；改用户 clearance
           立刻改变可见范围（"用户属性"页可试）。
         </p>
         <table className="cust-table">
@@ -381,7 +381,7 @@ export default function GlossaryPanel() {
             <tr>
               <td className="name">4</td>
               <td>机密 CONFIDENTIAL</td>
-              <td>如 carol（ENG / manager），密级够但境外读不到 CONFIDENTIAL（P-95）</td>
+              <td>如 carol（ENG / manager），密级够但境外读不到 CONFIDENTIAL（DOC-95）</td>
             </tr>
             <tr>
               <td className="name">3</td>

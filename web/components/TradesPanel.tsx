@@ -171,7 +171,7 @@ export default function TradesPanel() {
           </div>
         </div>
         <div className="hint">
-          试试：金额 60000 → REVIEW（P-85）；WEB+US → DENY（P-75）；连续累计超 100000 → DENY（P-80）
+          试试：金额 60000 → REVIEW（TRD-85）；WEB+US → DENY（TRD-75）；连续累计超 100000 → DENY（TRD-80）
         </div>
         <button className="btn" disabled={submitting} onClick={submit}>
           {submitting ? "校验中…" : "提交风控校验"}
@@ -237,7 +237,7 @@ export default function TradesPanel() {
         <h3>当日累计额度（内存状态，重启清零）</h3>
         <p className="sub">
           我的累计金额/次数会作为 resource.cumulativeAmount / cumulativeAfter 参与裁决，
-          P-80 据此拒绝超过 100,000 的当日累计。
+          TRD-80 据此拒绝超过 100,000 的当日累计。
         </p>
         {stats && (
           <table className="cust-table">

@@ -344,154 +344,154 @@ public class AbacService {
         if (policyRepository.findByName(SEED_MARKER).isPresent()) {
             return;
         }
-        save("P-100 非工作时间禁止删除文档",
+        save("DOC-100 非工作时间禁止删除文档",
                 "18:00-09:00 之外不允许删除任何文档（环境属性约束，连管理员也不例外）",
                 Effect.DENY, "DOCUMENT", "DELETE", "env.hour < 9 || env.hour >= 18", 100);
 
-        save("P-95 境外主体禁止读取机密文档",
+        save("DOC-95 境外主体禁止读取机密文档",
                 "数据属地：region != CN 的主体读不到 CONFIDENTIAL 文档",
                 Effect.DENY, "DOCUMENT", "READ",
                 "resource.classification == 'CONFIDENTIAL' && subject.region != 'CN'", 95);
 
-        save("P-90 密级不足禁止读取",
+        save("DOC-90 密级不足禁止读取",
                 "subject.clearance < resource.requiredClearance 即拒绝（PUBLIC=1 / INTERNAL=2 / CONFIDENTIAL=4 / SECRET=5）",
                 Effect.DENY, "DOCUMENT", "READ",
                 "subject.clearance < resource.requiredClearance", 90);
 
-        save("P-30 公开文档人人可读", "classification=PUBLIC 的文档不设门槛",
+        save("DOC-30 公开文档人人可读", "classification=PUBLIC 的文档不设门槛",
                 Effect.PERMIT, "DOCUMENT", "READ", "resource.classification == 'PUBLIC'", 30);
 
-        // 只约束部门，不约束密级：密级由 P-90（DENY）把关，这里放行不等于放行全部——
-        // 密级不够的人会被 P-90 拦掉，地区不符的会被 P-95 拦掉。PERMIT 只回答"部门对不对"。
-        save("P-20 同部门可读本部门文档",
+        // 只约束部门，不约束密级：密级由 DOC-90（DENY）把关，这里放行不等于放行全部——
+        // 密级不够的人会被 DOC-90 拦掉，地区不符的会被 DOC-95 拦掉。PERMIT 只回答"部门对不对"。
+        save("DOC-20 同部门可读本部门文档",
                 "本部门文档对本部门可见；跨部门一律拒绝（密级/地区另由 DENY 策略约束）",
                 Effect.PERMIT, "DOCUMENT", "READ",
                 "resource.department == subject.department", 20);
 
         // 集合动作 LIST：列表接口无具体资源，网关只能问"能不能列这个域"。
         // 放行列表不等于放行每一行——真正的行级边界在业务服务（见 ADR 0005）。
-        save("P-18 登录用户可列出文档", "列表接口放行给所有登录用户，可见行由业务服务按行级策略过滤",
+        save("DOC-18 登录用户可列出文档", "列表接口放行给所有登录用户，可见行由业务服务按行级策略过滤",
                 Effect.PERMIT, "DOCUMENT", "LIST", null, 18);
 
-        save("P-24 管理员/经理可列出用户", "用户列表对 manager / admin 可见",
+        save("USR-24 管理员/经理可列出用户", "用户列表对 manager / admin 可见",
                 Effect.PERMIT, "USER", "LIST",
                 "subject.title == 'admin' || subject.title == 'manager'", 24);
 
-        save("P-38 仅管理员可列出审计", "审计列表只对 admin 开放",
+        save("AUD-38 仅管理员可列出审计", "审计列表只对 admin 开放",
                 Effect.PERMIT, "AUDIT", "LIST", "subject.title == 'admin'", 38);
 
-        save("P-07 经理可列出策略", "manager 能列策略但不能改（配合 P-35 形成读写分离）",
+        save("POL-07 经理可列出策略", "manager 能列策略但不能改（配合 POL-35 形成读写分离）",
                 Effect.PERMIT, "POLICY", "LIST",
                 "subject.title == 'manager' || subject.title == 'admin'", 7);
 
-        save("P-15 经理及以上可发布文档", "PUBLISH 动作收敛到 manager / admin",
+        save("DOC-15 经理及以上可发布文档", "PUBLISH 动作收敛到 manager / admin",
                 Effect.PERMIT, "DOCUMENT", "PUBLISH",
                 "subject.title == 'manager' || subject.title == 'admin'", 15);
 
-        save("P-12 登录用户可创建文档", "创建不设额外门槛（无条件命中的 PERMIT 示例）",
+        save("DOC-12 登录用户可创建文档", "创建不设额外门槛（无条件命中的 PERMIT 示例）",
                 Effect.PERMIT, "DOCUMENT", "CREATE", null, 12);
 
-        save("P-10 作者可操作自己的文档", "owner 对本人的文档有全部操作权（action 通配 *）",
+        save("DOC-10 作者可操作自己的文档", "owner 对本人的文档有全部操作权（action 通配 *）",
                 Effect.PERMIT, "DOCUMENT", "*", "resource.owner == subject.username", 10);
 
-        save("P-05 管理员可操作全部文档", "admin 岗位对文档域全权（受 DENY 策略约束，不翻案）",
+        save("DOC-05 管理员可操作全部文档", "admin 岗位对文档域全权（受 DENY 策略约束，不翻案）",
                 Effect.PERMIT, "DOCUMENT", "*", "subject.title == 'admin'", 5);
 
-        save("P-60 仅管理员可修改用户属性", "改主体属性等于改权限，只放开给 admin",
+        save("USR-60 仅管理员可修改用户属性", "改主体属性等于改权限，只放开给 admin",
                 Effect.PERMIT, "USER", "UPDATE", "subject.title == 'admin'", 60);
 
-        save("P-25 管理员/经理可查看用户属性", "用户属性页对 manager / admin 可见",
+        save("USR-25 管理员/经理可查看用户属性", "用户属性页对 manager / admin 可见",
                 Effect.PERMIT, "USER", "READ",
                 "subject.title == 'admin' || subject.title == 'manager'", 25);
 
-        save("P-40 仅管理员可查看审计日志", "审计域只对 admin 开放",
+        save("AUD-40 仅管理员可查看审计日志", "审计域只对 admin 开放",
                 Effect.PERMIT, "AUDIT", "READ", "subject.title == 'admin'", 40);
 
-        save("P-35 管理员可管理策略", "策略域写操作只对 admin 开放",
+        save("POL-35 管理员可管理策略", "策略域写操作只对 admin 开放",
                 Effect.PERMIT, "POLICY", "*", "subject.title == 'admin'", 35);
 
-        save("P-08 经理可查看策略", "manager 能看策略但不能改（配合 P-35 形成读写分离）",
+        save("POL-08 经理可查看策略", "manager 能看策略但不能改（配合 POL-35 形成读写分离）",
                 Effect.PERMIT, "POLICY", "READ",
                 "subject.title == 'manager' || subject.title == 'admin'", 8);
 
         // ---- 风控域（TRADE）：独立 risk-service 的下单前置校验，演示 REVIEW 第三态与状态累计 ----
-        save("P-85 单笔大额转人工复核", "金额超过 50000 的交易不直接放行，转入工复核（REVIEW 第三态）",
+        save("TRD-85 单笔大额转人工复核", "金额超过 50000 的交易不直接放行，转入工复核（REVIEW 第三态）",
                 Effect.REVIEW, "TRADE", "EXECUTE", "resource.amount > 50000", 85);
 
-        save("P-80 当日累计超限拒绝", "当日累计成交金额（含本笔）超过 100000 直接拒绝",
+        save("TRD-80 当日累计超限拒绝", "当日累计成交金额（含本笔）超过 100000 直接拒绝",
                 Effect.DENY, "TRADE", "EXECUTE", "resource.cumulativeAfter > 100000", 80);
 
-        save("P-75 境外网页渠道禁止", "境外 + 网页渠道的组合直接拒绝（典型渠道风控）",
+        save("TRD-75 境外网页渠道禁止", "境外 + 网页渠道的组合直接拒绝（典型渠道风控）",
                 Effect.DENY, "TRADE", "EXECUTE",
                 "resource.channel == 'WEB' && resource.region != 'CN'", 75);
 
-        save("P-70 工程师单笔限额", "engineer 岗位单笔超过 20000 拒绝（演示用 alice）",
+        save("TRD-70 工程师单笔限额", "engineer 岗位单笔超过 20000 拒绝（演示用 alice）",
                 Effect.DENY, "TRADE", "EXECUTE",
                 "subject.title == 'engineer' && resource.amount > 20000", 70);
 
-        save("P-18 登录用户可查看交易", "交易列表对所有登录用户可见，单笔裁决由上面的规则把关",
+        save("TRD-18 登录用户可查看交易", "交易列表对所有登录用户可见，单笔裁决由上面的规则把关",
                 Effect.PERMIT, "TRADE", "LIST", null, 18);
 
-        save("P-12 交易兜底放行", "无风控规则命中时允许成交（DENY/REVIEW 规则在上层拦截）",
+        save("TRD-12 交易兜底放行", "无风控规则命中时允许成交（DENY/REVIEW 规则在上层拦截）",
                 Effect.PERMIT, "TRADE", "EXECUTE", null, 12);
 
         // ---- AI Agent 前置校验域（TOOL）：agent-service 在工具调用前问 PDP ----
         // 资源类型是工具域（WEB/EMAIL/PAYMENT/FS/CODE），动作是工具操作（FETCH/SEND/...）。
-        save("P-99 群发邮件转人工复核", "单封邮件收件人超过 5 人转人工复核（防 Agent 批量骚扰）",
+        save("EML-99 群发邮件转人工复核", "单封邮件收件人超过 5 人转人工复核（防 Agent 批量骚扰）",
                 Effect.REVIEW, "EMAIL", "SEND", "resource.recipientCount > 5", 99);
 
-        save("P-95 外链域名白名单", "目标 URL 域名不在白名单内直接拒绝（防 SSRF/恶意外联）",
+        save("WEB-95 外链域名白名单", "目标 URL 域名不在白名单内直接拒绝（防 SSRF/恶意外联）",
                 Effect.DENY, "WEB", "FETCH",
                 "resource.urlDomain != 'example.com' && resource.urlDomain != 'api.example.com' && resource.urlDomain != 'cnb.example.com'", 95);
 
-        save("P-92 会话外联次数上限", "同一会话累计外联超过 10 次拒绝（会话级状态累计）",
+        save("WEB-92 会话外联次数上限", "同一会话累计外联超过 10 次拒绝（会话级状态累计）",
                 Effect.DENY, "WEB", "FETCH", "resource.sessionFetchCount > 10", 92);
 
-        save("P-90 大额转账转人工复核", "单笔转账超过 10000 转人工复核",
+        save("PAY-90 大额转账转人工复核", "单笔转账超过 10000 转人工复核",
                 Effect.REVIEW, "PAYMENT", "TRANSFER", "resource.amount > 10000", 90);
 
-        save("P-85 工作区外禁止删除", "删除路径不在 /workspace 内直接拒绝",
+        save("FS-85 工作区外禁止删除", "删除路径不在 /workspace 内直接拒绝",
                 Effect.DENY, "FS", "DELETE", "!resource.path.startsWith('/workspace')", 85);
 
-        save("P-80 危险命令禁止", "代码里出现 rm -rf 等危险删除命令直接拒绝（沙箱禁方法调用，用 matches 正则操作符检测）",
+        save("COD-80 危险命令禁止", "代码里出现 rm -rf 等危险删除命令直接拒绝（沙箱禁方法调用，用 matches 正则操作符检测）",
                 Effect.DENY, "CODE", "EXECUTE", "resource.code matches '.*rm -rf.*'", 80);
 
-        save("P-78 会话发信次数上限", "同一会话累计发信超过 20 封拒绝",
+        save("EML-78 会话发信次数上限", "同一会话累计发信超过 20 封拒绝",
                 Effect.DENY, "EMAIL", "SEND", "resource.sessionSendCount > 20", 78);
 
-        save("P-75 疑似高危代码转复核", "代码里出现 ProcessBuild（进程启动类调用）转人工复核",
+        save("COD-75 疑似高危代码转复核", "代码里出现 ProcessBuild（进程启动类调用）转人工复核",
                 Effect.REVIEW, "CODE", "EXECUTE", "resource.code matches '.*ProcessBuild.*'", 75);
 
-        save("P-70 低信任 Agent 群发限制", "低信任 Agent 单封超过 3 个收件人直接拒绝",
+        save("EML-70 低信任 Agent 群发限制", "低信任 Agent 单封超过 3 个收件人直接拒绝",
                 Effect.DENY, "EMAIL", "SEND",
                 "subject.trust == 'low' && resource.recipientCount > 3", 70);
 
-        save("P-18 登录用户可查看工具调用", "工具调用记录对所有登录用户可见",
+        save("TOL-18 登录用户可查看工具调用", "工具调用记录对所有登录用户可见",
                 Effect.PERMIT, "TOOL", "LIST", null, 18);
 
-        save("P-15 工具调用网关兜底", "网关预裁兜底：细粒度工具校验由 agent-service 按工具域再问 PDP",
+        save("TOL-15 工具调用网关兜底", "网关预裁兜底：细粒度工具校验由 agent-service 按工具域再问 PDP",
                 Effect.PERMIT, "TOOL", "EXECUTE", null, 15);
 
-        save("P-12 外联兜底放行", "白名单内的外联允许（白名单外已被 P-95 拦截）",
+        save("WEB-12 外联兜底放行", "白名单内的外联允许（白名单外已被 WEB-95 拦截）",
                 Effect.PERMIT, "WEB", "FETCH", null, 12);
 
-        save("P-08 发信兜底放行", "常规发信允许（群发/低信任已被上层拦截）",
+        save("EML-08 发信兜底放行", "常规发信允许（群发/低信任已被上层拦截）",
                 Effect.PERMIT, "EMAIL", "SEND", null, 8);
 
-        save("P-06 转账兜底放行", "常规转账允许（超限已被 P-90 拦截）",
+        save("PAY-06 转账兜底放行", "常规转账允许（超限已被 PAY-90 拦截）",
                 Effect.PERMIT, "PAYMENT", "TRANSFER", null, 6);
 
-        save("P-05 删除兜底放行", "工作区内删除允许（工作区外已被 P-85 拦截）",
+        save("FS-05 删除兜底放行", "工作区内删除允许（工作区外已被 FS-85 拦截）",
                 Effect.PERMIT, "FS", "DELETE", null, 5);
 
-        save("P-04 代码执行兜底放行", "常规代码执行允许（危险调用已被 P-80/P-75 拦截）",
+        save("COD-04 代码执行兜底放行", "常规代码执行允许（危险调用已被 COD-80/COD-75 拦截）",
                 Effect.PERMIT, "CODE", "EXECUTE", null, 4);
 
         log.info("[abac] seeded {} demo policies (deny-override, default deny)", policyRepository.count());
         invalidatePolicies();
     }
 
-    private static final String SEED_MARKER = "P-100 非工作时间禁止删除文档";
+    private static final String SEED_MARKER = "DOC-100 非工作时间禁止删除文档";
 
     private void save(String name, String description, Effect effect, String resourceType,
                       String action, String condition, int priority) {
