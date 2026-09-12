@@ -11,16 +11,22 @@ import com.example.abac.abac.exception.NotFoundException;
 import com.example.abac.abac.model.Effect;
 import com.example.abac.abac.model.Policy;
 import com.example.abac.abac.repository.PolicyRepository;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ABAC 服务门面：策略 CRUD + 裁决入口。
@@ -35,10 +41,37 @@ public class AbacService {
 
     private static final Logger log = LoggerFactory.getLogger(AbacService.class);
 
+    /** 决策结果缓存上限：超过即整体清空（与 PolicyEngine 表达式缓存同样的简易容量保护）。 */
+    private static final int MAX_DECISION_CACHE = 1024;
+
+    /** 批量裁决单次请求数上限：防止单个请求一次问数千条把网关↔PDP 的请求体撑爆。 */
+    private static final int MAX_BATCH_SIZE = 500;
+
     private final PolicyRepository policyRepository;
     private final PolicyEngine policyEngine;
     private final PipClient pipClient;
     private final boolean pipFailClosed;
+
+    /**
+     * 决策结果缓存：key = (subject + resource + action + 有效环境) 的规范化 JSON。
+     * 命中即跳过 policyRepository.findAll() 与 evaluate 逐策略循环，是列表接口行级过滤
+     * （每个候选文档一次裁决）最主要的重复开销来源，缓存后显著降压。
+     * 仅在资源属性完整解析（PIP 正常）时写入；PIP 失败走最小属性或 fail-closed 时不缓存，
+     * 避免把"属性不全时的裁决"误当成正确结果复用。策略增删改会清空整张缓存
+     * （任一策略都可能改变任一裁决），保证不出现陈旧决策。
+     */
+    private final Map<String, PolicyEngine.Decision> decisionCache = new ConcurrentHashMap<>();
+    private static final ObjectMapper KEY_MAPPER = new ObjectMapper()
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+
+    /**
+     * 策略全表缓存：策略集合极少变动，裁决时直接复用，避免每次 decide 都 findAll() 打库
+     * （网关每请求一次 PDP、业务服务每次对象级校验都是一次）。CRUD / 播种后整体失效。
+     * {@code policyListVersion} 随每次重新加载递增并参与决策缓存 key：
+     * 提交后清空缓存的窗口内，任何基于旧快照写入的裁决都带着旧版本号，永远无法命中新缓存。
+     */
+    private volatile List<Policy> policyListCache;
+    private volatile long policyListVersion;
 
     public AbacService(PolicyRepository policyRepository,
                        PolicyEngine policyEngine,
@@ -48,6 +81,50 @@ public class AbacService {
         this.policyEngine = policyEngine;
         this.pipClient = pipClient;
         this.pipFailClosed = pipFailClosed;
+    }
+
+    /** 策略快照 + 加载版本：版本参与决策缓存 key，保证陈旧快照的裁决不可命中。 */
+    private record LoadedPolicies(List<Policy> policies, long version) {
+    }
+
+    /** 取策略全表（带内存缓存，失效后重载），并返回当前快照版本。 */
+    private LoadedPolicies loadPolicies() {
+        List<Policy> cached = policyListCache;
+        if (cached != null) {
+            return new LoadedPolicies(cached, policyListVersion);
+        }
+        synchronized (this) {
+            if (policyListCache != null) {
+                return new LoadedPolicies(policyListCache, policyListVersion);
+            }
+            List<Policy> fresh = policyRepository.findAll();
+            policyListCache = fresh;
+            policyListVersion++;
+            return new LoadedPolicies(fresh, policyListVersion);
+        }
+    }
+
+    /**
+     * 策略集合变更后失效缓存。事务内调用时注册到<b>提交后</b>执行：
+     * 若在提交前清空，其他线程在事务未提交时 findAll 仍会读到旧策略，
+     * 把旧快照写进策略列表缓存和决策缓存——提交后这两个缓存都不会再失效。
+     * 无事务（如单条 save 的 createPolicy）则立即失效。
+     */
+    private void invalidatePolicies() {
+        Runnable invalidate = () -> {
+            policyListCache = null;
+            decisionCache.clear();
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    invalidate.run();
+                }
+            });
+        } else {
+            invalidate.run();
+        }
     }
 
     // ---------------- 策略管理 ----------------
@@ -83,7 +160,9 @@ public class AbacService {
         p.setPriority(req.priority() == null ? 0 : req.priority());
         p.setEnabled(req.enabled() == null || req.enabled());
         p.setCreatedAt(System.currentTimeMillis());
-        return toDto(policyRepository.save(p));
+        Policy saved = policyRepository.save(p);
+        invalidatePolicies();
+        return toDto(saved);
     }
 
     @Transactional
@@ -117,6 +196,7 @@ public class AbacService {
         if (req.enabled() != null) {
             p.setEnabled(req.enabled());
         }
+        invalidatePolicies(); // 策略变更后任一裁决都可能变，整表失效
         return toDto(policyRepository.save(p));
     }
 
@@ -126,27 +206,14 @@ public class AbacService {
             throw new NotFoundException("policy not found: " + id);
         }
         policyRepository.deleteById(id);
+        invalidatePolicies();
     }
 
     // ---------------- 裁决 ----------------
 
     public PolicyEngine.Decision decide(DecisionRequest req) {
-        Map<String, Object> resource;
-        try {
-            resource = resolveResource(req == null ? null : req.resource());
-        } catch (PipClient.PipException e) {
-            if (pipFailClosed) {
-                log.warn("PIP 不可用，fail-closed 拒绝: {}", e.getMessage());
-                return PolicyEngine.Decision.deny(
-                        "PIP unavailable, fail-closed: " + e.getMessage(), List.of());
-            }
-            resource = minimalResource(req == null ? null : req.resource());
-        }
-        if (req == null) {
-            return PolicyEngine.Decision.deny("empty decision request", List.of());
-        }
-        return policyEngine.evaluate(policyRepository.findAll(), req.subject(), resource,
-                req.action(), req.environment());
+        LoadedPolicies lp = loadPolicies();
+        return decideCached(lp.policies(), lp.version(), req);
     }
 
     /** 批量裁决：业务服务按行过滤时一次问多个资源，避免 N 次 HTTP 往返。 */
@@ -154,30 +221,77 @@ public class AbacService {
         if (requests == null || requests.isEmpty()) {
             return List.of();
         }
-        List<Policy> policies = policyRepository.findAll();
+        if (requests.size() > MAX_BATCH_SIZE) {
+            throw new IllegalArgumentException("batch size exceeds limit: " + MAX_BATCH_SIZE);
+        }
+        LoadedPolicies lp = loadPolicies();
         List<PolicyEngine.Decision> out = new ArrayList<>(requests.size());
         for (DecisionRequest req : requests) {
-            out.add(decideWithPolicies(policies, req));
+            out.add(decideCached(lp.policies(), lp.version(), req));
         }
         return out;
     }
 
-    private PolicyEngine.Decision decideWithPolicies(List<Policy> policies, DecisionRequest req) {
+    /**
+     * 带缓存的单次裁决。策略集合与版本由调用方传入（decide 与 decideBatch 各自取一次，
+     * 避免批量内重复 findAll；版本保证旧快照的裁决不落新缓存）。
+     * 仅当资源属性经 PIP 完整解析（resolved=true）时查/写缓存；PIP 失败或走最小属性路径
+     * 一律实时判定且不缓存，防止"属性不全时的裁决"被误当正确结果复用。
+     */
+    private PolicyEngine.Decision decideCached(List<Policy> policies, long version, DecisionRequest req) {
         Map<String, Object> resource;
+        boolean resolved;
         try {
             resource = resolveResource(req == null ? null : req.resource());
+            resolved = true;
         } catch (PipClient.PipException e) {
             if (pipFailClosed) {
+                log.warn("PIP 不可用，fail-closed 拒绝: {}", e.getMessage());
                 return PolicyEngine.Decision.deny(
                         "PIP unavailable, fail-closed: " + e.getMessage(), List.of());
             }
             resource = minimalResource(req == null ? null : req.resource());
+            resolved = false;
         }
         if (req == null) {
             return PolicyEngine.Decision.deny("empty decision request", List.of());
         }
+        if (resolved) {
+            Map<String, Object> env = PolicyEngine.resolveEnvironment(req.environment());
+            String key = cacheKey(version, req.subject(), resource, req.action(), env);
+            if (key != null) {
+                PolicyEngine.Decision cached = decisionCache.get(key);
+                if (cached != null) {
+                    return cached;
+                }
+                PolicyEngine.Decision d = policyEngine.evaluate(policies, req.subject(),
+                        resource, req.action(), req.environment());
+                if (decisionCache.size() >= MAX_DECISION_CACHE) {
+                    decisionCache.clear();
+                }
+                decisionCache.put(key, d);
+                return d;
+            }
+        }
         return policyEngine.evaluate(policies, req.subject(), resource, req.action(),
                 req.environment());
+    }
+
+    /** 规范化缓存 key：版本 + subject/resource/action/有效环境，键名排序保证稳定。 */
+    private String cacheKey(long version, Map<String, Object> subject, Map<String, Object> resource,
+                            String action, Map<String, Object> env) {
+        try {
+            Map<String, Object> key = new LinkedHashMap<>();
+            key.put("v", version);
+            key.put("s", subject);
+            key.put("r", resource);
+            key.put("a", action == null ? "" : action);
+            key.put("e", env);
+            return KEY_MAPPER.writeValueAsString(key);
+        } catch (Exception e) {
+            log.debug("决策缓存 key 序列化失败，跳过缓存: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -298,8 +412,8 @@ public class AbacService {
                 Effect.PERMIT, "POLICY", "READ",
                 "subject.title == 'manager' || subject.title == 'admin'", 8);
 
-        System.out.println("[abac] seeded " + policyRepository.count()
-                + " demo policies (deny-override, default deny)");
+        log.info("[abac] seeded {} demo policies (deny-override, default deny)", policyRepository.count());
+        invalidatePolicies();
     }
 
     private static final String SEED_MARKER = "P-100 非工作时间禁止删除文档";
