@@ -2,6 +2,10 @@
 logs
 .pids
 data
-**/target
+# 排除 Maven 构建中间产物，但保留各服务的可执行 jar —— Dockerfile 靠
+# `COPY <svc>/target/*.jar app.jar` 取件，整段排掉会 COPY 失败。
+# （最后匹配者胜：target 下全部排除，再把 *.jar 放行回来）
+**/target/**
+!**/target/*.jar
 web/node_modules
 web/.next

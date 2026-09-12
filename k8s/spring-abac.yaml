@@ -133,8 +133,8 @@ spec:
               value: "false"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: auth-service
-            - name: SPRING_CONFIG_IMPORT
-              value: optional:configserver:http://config-server:8889
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "640Mi", cpu: "800m" }
@@ -184,8 +184,8 @@ spec:
               value: "false"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: abac-service
-            - name: SPRING_CONFIG_IMPORT
-              value: optional:configserver:http://config-server:8889
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "640Mi", cpu: "800m" }
@@ -235,8 +235,8 @@ spec:
               value: "false"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: document-service
-            - name: SPRING_CONFIG_IMPORT
-              value: optional:configserver:http://config-server:8889
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "640Mi", cpu: "800m" }
@@ -286,8 +286,8 @@ spec:
               value: "false"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: audit-service
-            - name: SPRING_CONFIG_IMPORT
-              value: optional:configserver:http://config-server:8889
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "640Mi", cpu: "800m" }
@@ -338,8 +338,8 @@ spec:
               value: "false"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: gateway-service
-            - name: SPRING_CONFIG_IMPORT
-              value: optional:configserver:http://config-server:8889
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           livenessProbe:
             httpGet: { path: /health, port: 4110 }
             initialDelaySeconds: 45

@@ -5,7 +5,7 @@ spring:
   application:
     name: gateway-service
   config:
-    import: optional:configserver:http://localhost:8889
+    import: optional:configserver:http://${CONFIG_SERVER_HOST:localhost}:8889
   cloud:
     gateway:
       routes:
@@ -52,6 +52,11 @@ logging:
   level:
     org.springframework: WARN
     reactor: WARN
+    # 开发/演示环境：config-server 用 optional: import，启动瞬间 config-server 未就绪会打 WARN，
+    # 属预期（本地兜底 yml 已接管），降到 ERROR 避免噪音；生产如需感知配置拉取失败可调回 WARN。
+    org.springframework.cloud.config.client.ConfigServerConfigDataLoader: ERROR
+    # Spring Cloud LoadBalancer 开发期建议用 Caffeine 缓存的提示，演示环境无需，关掉。
+    "org.springframework.cloud.loadbalancer.config.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger": OFF
 
 # 本地兜底（config-server 不可用时生效）
 resilience4j:
@@ -77,3 +82,10 @@ eureka:
   instance:
     prefer-ip-address: true
     ip-address: 127.0.0.1
+
+# 本地兜底：config-server 用 optional: import，偶发不可达时会静默跳过 import，
+# 此时必须能解析 ${app.jwt-secret}，否则 AuthGlobalFilter 启动即退（Exit 1）。
+# 运行时 config-server 提供的同名值优先级更高，会覆盖此处（行为不变）。
+app:
+  jwt-secret: "dev-only-secret-change-me-please"
+  jwt-ttl: 86400000
