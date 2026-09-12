@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { decide } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { DecisionRequest, DecisionResponse } from "@/lib/types";
@@ -238,6 +238,16 @@ export default function SimulatorPanel() {
   const [title, setTitle] = useState(user?.title ?? "engineer");
   // Agent 域场景会用到信任等级（低信任有更严的群发限制）
   const [trust, setTrust] = useState("high");
+
+  // 顶栏切换身份后（user 变化），主体属性跟随新主体——避免停留在旧账号的残留属性
+  useEffect(() => {
+    if (!user) return;
+    setUsername(user.username ?? "");
+    setDepartment(user.department ?? "ENG");
+    setClearance(user.clearance ?? 3);
+    setRegion(user.region ?? "CN");
+    setTitle(user.title ?? "engineer");
+  }, [user]);
 
   // 资源属性
   const [resourceType, setResourceType] = useState("DOCUMENT");
