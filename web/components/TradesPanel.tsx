@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import {
   approveReview,
   executeTrade,
+  listPolicies,
   listReviews,
   myTrades,
   rejectReview,
   tradeStats,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { ReviewTask, TradeExecution, TradeRequest, TradeResult, TradeStats } from "@/lib/types";
+import type { PolicyDto, ReviewTask, TradeExecution, TradeRequest, TradeResult, TradeStats } from "@/lib/types";
 
 const EMPTY: TradeRequest = {
   amount: 10000,
@@ -38,6 +39,7 @@ export default function TradesPanel() {
   const [trades, setTrades] = useState<TradeExecution[]>([]);
   const [stats, setStats] = useState<TradeStats | null>(null);
   const [reviews, setReviews] = useState<ReviewTask[]>([]);
+  const [tradePolicies, setTradePolicies] = useState<PolicyDto[]>([]);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
 
@@ -46,14 +48,21 @@ export default function TradesPanel() {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      const [t, s, r] = await Promise.all([
+      const [t, s, r, p] = await Promise.all([
         myTrades(token),
         tradeStats(token),
         listReviews(token),
+        listPolicies(token),
       ]);
       setTrades(t);
       setStats(s);
       setReviews(r);
+      // 只展示 TRADE 域的风控策略，按优先级从高到低
+      setTradePolicies(
+        p
+          .filter((x) => (x.resourceType ?? "").toUpperCase() === "TRADE")
+          .sort((a, b) => b.priority - a.priority),
+      );
     } catch {
       // 列表失败不阻断面板使用
     }
@@ -180,6 +189,46 @@ export default function TradesPanel() {
         )}
         {err && <div className="err" style={{ marginTop: 12 }}>{err}</div>}
         {ok && <div className="ok" style={{ marginTop: 12 }}>{ok}</div>}
+      </div>
+
+      <div className="card">
+        <h3>当前生效的风控策略（TRADE 域）</h3>
+        <p className="sub">
+          按优先级从高到低求值：命中 DENY 立即拒绝（deny-override），REVIEW 转人工复核，
+          都不中才落到 PERMIT 兜底；无任何命中默认拒绝。
+        </p>
+        {tradePolicies.length === 0 ? (
+          <p className="sub">暂无 TRADE 策略（可在「策略」Tab 录入）</p>
+        ) : (
+          <table className="pol-table">
+            <thead>
+              <tr>
+                <th>优先级</th>
+                <th>效果</th>
+                <th>策略</th>
+                <th>动作</th>
+                <th>条件</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tradePolicies.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.priority}</td>
+                  <td>
+                    {p.effect === "DENY" && <span className="err">DENY</span>}
+                    {p.effect === "REVIEW" && <span className="warn">REVIEW</span>}
+                    {p.effect === "PERMIT" && <span className="ok">PERMIT</span>}
+                  </td>
+                  <td>{p.name}</td>
+                  <td>{p.action ?? "*"}</td>
+                  <td className="cond">{p.condition ?? "-"}</td>
+                  <td className="sub">{p.description ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div className="card">
