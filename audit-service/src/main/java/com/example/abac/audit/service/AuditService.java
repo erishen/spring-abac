@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuditService {
 
+    private static final String DECISION_ALLOW = "ALLOW";
+    private static final String DECISION_DENY = "DENY";
+
     private final AuditLogRepository repository;
 
     public AuditService(AuditLogRepository repository) {
@@ -49,8 +52,8 @@ public class AuditService {
 
     public AuditStatsDto stats() {
         return new AuditStatsDto(repository.count(),
-                repository.countByDecision("ALLOW"),
-                repository.countByDecision("DENY"));
+                repository.countByDecision(DECISION_ALLOW),
+                repository.countByDecision(DECISION_DENY));
     }
 
     private static String blankToNull(String v) {

@@ -10,6 +10,8 @@ import com.example.abac.document.model.Document;
 import com.example.abac.document.repository.DocumentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +27,8 @@ import java.util.Map;
  */
 @Service
 public class DocumentService {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final DocumentRepository repository;
     private final AbacClient abacClient;
@@ -234,7 +238,7 @@ public class DocumentService {
         save("接口设计规范（内部）", "REST 命名、错误码与分页约定", "alice", "ENG", "INTERNAL", "PUBLISHED");
         save("销售话术手册（内部）", "客户分层与异议处理话术", "bob", "SALES", "INTERNAL", "DRAFT");
         save("产品使用手册（公开）", "对外发布的产品说明", "alice", "ENG", "PUBLIC", "PUBLISHED");
-        System.out.println("[document] seeded " + repository.count() + " sample documents");
+        log.info("[document] seeded {} sample documents", repository.count());
     }
 
     private void save(String title, String content, String owner, String dept,

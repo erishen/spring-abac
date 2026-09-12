@@ -12,7 +12,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.UUID;
-/** 轻量链路追踪：接收并透传网关的 X-Trace-Id，写入 MDC。 */
+
+/** 轻量链路追踪：接收并透传网关的 X-Trace-Id，写入 MDC 便于按 traceId 串联日志。 */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class TraceIdFilter extends OncePerRequestFilter {

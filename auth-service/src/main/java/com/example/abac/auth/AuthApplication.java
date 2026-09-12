@@ -7,6 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 认证服务。播种 4 个属性差异明显的账号，用来演示同一条策略在不同属性下给出不同裁决：
@@ -18,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 @EnableDiscoveryClient
 public class AuthApplication {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(AuthApplication.class, args);
@@ -37,8 +41,8 @@ public class AuthApplication {
                       String dept, int clearance, String region, String title) {
         if (repo.findByUsername(username).isEmpty()) {
             authService.register(username, password, dept, clearance, region, title);
-            System.out.println("[auth] seeded " + username + " / " + password
-                    + " (dept=" + dept + " clearance=" + clearance + " region=" + region + " title=" + title + ")");
+            log.info("[auth] seeded {} / {} (dept={} clearance={} region={} title={})",
+                    username, password, dept, clearance, region, title);
         }
     }
 }

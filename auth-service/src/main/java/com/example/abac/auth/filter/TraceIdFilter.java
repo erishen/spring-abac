@@ -13,10 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * 轻量链路追踪：网关生成的 X-Trace-Id 沿请求头贯穿到本服务，
- * 放入 MDC（日志 pattern 里以 [traceId] 呈现，可 grep 串联整条链路），并回写响应头。
- */
+/** 轻量链路追踪：接收并透传网关的 X-Trace-Id，写入 MDC 便于按 traceId 串联日志。 */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class TraceIdFilter extends OncePerRequestFilter {
