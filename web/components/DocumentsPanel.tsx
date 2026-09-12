@@ -6,11 +6,12 @@ import {
   deleteDocument,
   getDocument,
   listDocuments,
+  listPolicies,
   publishDocument,
   updateDocument,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { DocumentDto, DocumentPage } from "@/lib/types";
+import type { DocumentDto, DocumentPage, PolicyDto } from "@/lib/types";
 
 const CLASSIFICATIONS = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"];
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"];
@@ -26,6 +27,7 @@ export default function DocumentsPanel() {
 
   const [detail, setDetail] = useState<DocumentDto | null>(null);
   const [detailErr, setDetailErr] = useState("");
+  const [docPolicies, setDocPolicies] = useState<PolicyDto[]>([]);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -45,6 +47,22 @@ export default function DocumentsPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // 文档域策略清单：独立加载一次即可（不随搜索/翻页重复请求）
+  useEffect(() => {
+    if (!token) return;
+    listPolicies(token)
+      .then((p) =>
+        setDocPolicies(
+          p
+            .filter((x) => (x.resourceType ?? "").toUpperCase() === "DOCUMENT")
+            .sort((a, b) => b.priority - a.priority),
+        ),
+      )
+      .catch(() => {
+        /* 策略清单加载失败不阻断面板 */
+      });
+  }, [token]);
 
   async function submit() {
     if (!token) return;
@@ -263,6 +281,47 @@ export default function DocumentsPanel() {
             </select>
           </span>
         </div>
+      </div>
+
+      <div className="card">
+        <h2>当前生效的文档策略（DOCUMENT 域）</h2>
+        <p className="sub">
+          列表页的行级可见性由 P-90 / P-95 / P-20 等逐行裁决决定；写操作（CREATE / PUBLISH / DELETE）
+          走 P-12 / P-15 / P-05 / P-100。按优先级从高到低求值，DENY 短路（deny-override），
+          都不中默认拒绝。
+        </p>
+        {docPolicies.length === 0 ? (
+          <div className="empty-state">暂无 DOCUMENT 策略（可在「策略」Tab 录入）</div>
+        ) : (
+          <table className="pol-table">
+            <thead>
+              <tr>
+                <th>优先级</th>
+                <th>效果</th>
+                <th>策略</th>
+                <th>动作</th>
+                <th>条件</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              {docPolicies.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.priority}</td>
+                  <td>
+                    {p.effect === "DENY" && <span className="err">DENY</span>}
+                    {p.effect === "REVIEW" && <span className="warn">REVIEW</span>}
+                    {p.effect === "PERMIT" && <span className="ok">PERMIT</span>}
+                  </td>
+                  <td>{p.name}</td>
+                  <td>{p.action ?? "*"}</td>
+                  <td className="cond">{p.condition ?? "-"}</td>
+                  <td className="sub">{p.description ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {detail && (
