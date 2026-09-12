@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # spring-abac 端到端演示：同一个接口，换主体属性即可得到不同裁决。
 #
-# 前置：make start（七服务 + 前端就绪）
+# 前置：make start（九服务 + 前端就绪）
 # 用法：bash scripts/demo.sh          （默认打本机网关 4110）
 #       DEMO_PORT=41100 bash scripts/demo.sh   （k3s 端口转发场景）
 set -u
@@ -80,7 +80,7 @@ if [ -n "$ADMIN" ]; then
  "action":"DELETE","environment":{"hour":22}}
 JSON
 )
-  echo "  admin 在 22:00 删文档（P-100 非工作时间禁止删除，DENY 不翻案） -> $(
+  echo "  admin 在 22:00 删文档（DOC-100 非工作时间禁止删除，DENY 不翻案） -> $(
     $CURL -X POST "$BASE/api/decide" -H 'content-type: application/json' \
           -H "Authorization: Bearer $ADMIN" -d "$body" \
     | sed 's/,"trace":.*//' | sed -n 's/.*"effect":"\([A-Z]*\)".*/\1/p'

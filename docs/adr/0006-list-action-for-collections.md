@@ -17,7 +17,7 @@ GET /api/documents  →  PDP 收到 resource = {type: "DOCUMENT", id: null}
                     →  无任何策略命中 → default deny → 403
 ```
 
-现象很有迷惑性：**admin 能列（6 篇），其他人全是 403**。因为 P-05
+现象很有迷惑性：**admin 能列（6 篇），其他人全是 403**。因为 DOC-05
 （`subject.title == 'admin'`）是纯主体条件，不依赖资源属性；其余策略都引用了 `resource.*`,
 在空属性包下全部落空。看起来像"策略配错了"，实际是"问错了问题"。
 
@@ -28,10 +28,10 @@ GET /api/documents  →  PDP 收到 resource = {type: "DOCUMENT", id: null}
 
 | 策略 | 作用域 | 条件 | 语义 |
 |---|---|---|---|
-| P-18 | DOCUMENT / LIST | 无条件 | 登录用户可列出文档（行级过滤兜底） |
-| P-24 | USER / LIST | admin 或 manager | 用户列表只对管理者开放 |
-| P-38 | AUDIT / LIST | admin | 审计只对 admin 开放 |
-| P-07 | POLICY / LIST | admin 或 manager | 策略列表对管理者开放 |
+| DOC-18 | DOCUMENT / LIST | 无条件 | 登录用户可列出文档（行级过滤兜底） |
+| USR-24 | USER / LIST | admin 或 manager | 用户列表只对管理者开放 |
+| AUD-38 | AUDIT / LIST | admin | 审计只对 admin 开放 |
+| POL-07 | POLICY / LIST | admin 或 manager | 策略列表对管理者开放 |
 
 ## 理由
 

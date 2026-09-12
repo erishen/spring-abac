@@ -86,7 +86,7 @@ PDP 侧也有默认值兜底（直接调 `/api/decide` 不带 environment 时自
 @Entity
 public class Policy {
     String  name;           // 唯一，人类可读
-    Effect  effect;         // PERMIT / DENY
+    Effect  effect;         // PERMIT / DENY / REVIEW（第三态：转人工复核）
     String  resourceType;   // DOCUMENT / USER / POLICY / AUDIT / * 或空
     String  action;         // READ / CREATE / UPDATE / DELETE / PUBLISH / * 或空
     String  condition;      // SpEL，可用 subject.* / resource.* / env.* / action
@@ -114,6 +114,8 @@ for p in candidates:
 
     if matched and p.effect == DENY:
         return DENY                        # ← 短路，后面的都不看了
+    if matched and p.effect == REVIEW:
+        return REVIEW                      # ← 转人工复核，不被后面的 PERMIT 覆盖
     if matched and p.effect == PERMIT:
         return PERMIT
 
@@ -125,12 +127,23 @@ return DENY                                # 无命中 = 默认拒绝
 DENY 一旦命中立即返回，后面的 PERMIT 根本不会被看到。这让"例外"可以被自然表达：
 
 ```
-P-100  DENY   DOCUMENT/DELETE   env.hour < 9 || env.hour >= 18     ← 例外
-P-05   PERMIT DOCUMENT/*        subject.title == 'admin'            ← 一般规则
+DOC-100  DENY   DOCUMENT/DELETE   env.hour < 9 || env.hour >= 18     ← 例外
+DOC-05   PERMIT DOCUMENT/*        subject.title == 'admin'            ← 一般规则
 ```
 
 管理员在深夜删文档照样被拒。RBAC 里 `ROLE_ADMIN` 是"有权限"的布尔值，
 没法表达"有权限，但是……"——这正是 ABAC 表达力的关键点。
+
+### REVIEW 第三态：从"放/拦"到"放/拦/复核"
+
+两态裁决只回答"行不行"，REVIEW 增加"拿不准"：命中 REVIEW 的策略不直接拒绝、
+也不直接放行，而是把这次访问落成**人工复核任务**，manager/admin 批准后才生效。
+
+- 合并语义：**DENY 短路 REVIEW**（明确禁止 > 拿不准）；**REVIEW 不被 PERMIT 覆盖**
+  （白名单兜底救不了拿不准的）；都不中才默认拒绝。
+- 生效在业务侧：`risk-service`（TRD-85 单笔大额、TRD-70 工程师限额）与
+  `agent-service`（EML-99 群发、COD-75 高危代码、PAY-90 大额转账）各自维护
+  复核队列与状态累计——批准才计入当日累计/会话计数，PDP 不可达时 fail-closed。
 
 **另外两条语义**：
 - **默认拒绝**：无策略命中 = DENY。不给隐式放行，配置漏了是"不能用"而不是"全都能用"。

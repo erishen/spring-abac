@@ -1,6 +1,6 @@
 # spring-abac — ABAC 微服务系统（Spring Boot + Spring Cloud）便捷命令入口
 #
-# 七个服务（启动顺序固定：先基础设施，后业务）：
+# 九个服务（启动顺序固定：先基础设施，后业务）：
 #   eureka-server     端口 8762  服务注册中心
 #   config-server     端口 8889  配置中心（native 后端）
 #   gateway-service   端口 4110  API 网关 / PEP（JWT 校验 + 映射动作 + 问 PDP + 审计）
@@ -8,6 +8,8 @@
 #   abac-service      端口 4112  ABAC PDP（策略 CRUD + SpEL 求值 + PIP 回源）
 #   document-service  端口 4113  文档业务域（行级 ABAC 过滤 + PIP 属性端点）
 #   audit-service     端口 4114  审计（append-only，记录每次裁决与命中策略）
+#   risk-service      端口 4115  交易风控（REVIEW 第三态：大额转人工复核 + 当日累计）
+#   agent-service     端口 4116  AI Agent 前置校验（工具级策略 + 会话计数 + REVIEW）
 # 外加前端：
 #   web               端口 3001  Next.js（BFF：/api/* 经 rewrite 代理到网关 4110）
 #
@@ -29,6 +31,8 @@ AUTH_JAR   := auth-service/target/auth-service-0.0.1-SNAPSHOT.jar
 ABAC_JAR   := abac-service/target/abac-service-0.0.1-SNAPSHOT.jar
 DOC_JAR    := document-service/target/document-service-0.0.1-SNAPSHOT.jar
 AUDIT_JAR  := audit-service/target/audit-service-0.0.1-SNAPSHOT.jar
+RISK_JAR   := risk-service/target/risk-service-0.0.1-SNAPSHOT.jar
+AGENT_JAR  := agent-service/target/agent-service-0.0.1-SNAPSHOT.jar
 
 LOG_DIR := logs
 PID_DIR := .pids
@@ -56,15 +60,15 @@ SUBMAKE     := $(MAKE)
 help: ## 显示本帮助
 	@echo "spring-abac — ABAC 微服务系统（Spring Boot + Spring Cloud）可用命令："
 	@echo ""
-	@echo "  make build     编译打包，生成七个可执行 jar（mvn package -DskipTests）"
+	@echo "  make build     编译打包，生成九个可执行 jar（mvn package -DskipTests）"
 	@echo "  make compile   仅编译（不打包）"
 	@echo "  make test      跑单测（含 abac-service 策略引擎 PolicyEngineTest）"
-	@echo "  make start     后台启动七服务（eureka→config→auth/abac/document/audit/gateway）+ 前端 :3001"
+	@echo "  make start     后台启动九服务（eureka→config→auth/abac/document/audit/risk/agent/gateway）+ 前端 :3001"
 	@echo "  make dev       重新编译并后台启动（改码后用）"
 	@echo "  make stop      停止全部后台服务（含前端）"
 	@echo "  make restart   停止 + 重新编译打包 + 启动（改码后必用，确保吃到新 jar）"
-	@echo "  make status    检查七个后端服务 + 前端的健康/可达状态"
-	@echo "  make demo      端到端演示（需先 make start）：同一接口换账号得到不同裁决"
+	@echo "  make status    检查九个后端服务 + 前端的健康/可达状态"
+	@echo "  make demo      端到端演示（需先 make start）：文档/交易/Agent 三域裁决"
 	@echo "  make reset-db  清空本地 H2 数据库（下次启动重建种子）"
 	@echo "  make clean     停止服务 + mvn clean + 清空数据库 + 清 web/.next"
 	@echo ""
@@ -91,7 +95,7 @@ help: ## 显示本帮助
 	@echo "      演示账号 admin/admin123（EXEC·5·CN·admin）、carol/carol123（ENG·4·US·manager）、"
 	@echo "      alice/alice123（ENG·3·CN·engineer）、bob/bob123（SALES·2·CN·sales）——属性不同裁决不同。"
 
-build: ## 编译打包，生成七个可执行 jar
+build: ## 编译打包，生成九个可执行 jar
 	$(MVN) -q package -DskipTests
 
 compile: ## 仅编译（不打包）
@@ -101,7 +105,7 @@ test: ## 跑单测（策略引擎 deny-override / SpEL 沙箱 / PIP）
 	$(MVN) test
 
 start: ## 后台启动七服务 + 前端，等待就绪
-	@if [ ! -f $(EUREKA_JAR) ] || [ ! -f $(CONFIG_JAR) ] || [ ! -f $(GW_JAR) ] || [ ! -f $(AUTH_JAR) ] || [ ! -f $(ABAC_JAR) ] || [ ! -f $(DOC_JAR) ] || [ ! -f $(AUDIT_JAR) ]; then echo "jar 缺失，先编译..."; $(SUBMAKE) build; fi
+	@if [ ! -f $(EUREKA_JAR) ] || [ ! -f $(CONFIG_JAR) ] || [ ! -f $(GW_JAR) ] || [ ! -f $(AUTH_JAR) ] || [ ! -f $(ABAC_JAR) ] || [ ! -f $(DOC_JAR) ] || [ ! -f $(AUDIT_JAR) ] || [ ! -f $(RISK_JAR) ] || [ ! -f $(AGENT_JAR) ]; then echo "jar 缺失，先编译..."; $(SUBMAKE) build; fi
 	@mkdir -p $(LOG_DIR) $(PID_DIR)
 	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(EUREKA_JAR) > $(LOG_DIR)/eureka.log 2>&1 & echo $$! > $(PID_DIR)/eureka.pid
 	@echo "  启动 eureka-server     (8762)，PID $$(cat $(PID_DIR)/eureka.pid)"
@@ -123,6 +127,10 @@ start: ## 后台启动七服务 + 前端，等待就绪
 	@echo "  启动 document-service  (4113)，PID $$(cat $(PID_DIR)/document.pid)"
 	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(AUDIT_JAR) > $(LOG_DIR)/audit.log 2>&1 & echo $$! > $(PID_DIR)/audit.pid
 	@echo "  启动 audit-service     (4114)，PID $$(cat $(PID_DIR)/audit.pid)"
+	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(RISK_JAR) > $(LOG_DIR)/risk.log 2>&1 & echo $$! > $(PID_DIR)/risk.pid
+	@echo "  启动 risk-service      (4115)，PID $$(cat $(PID_DIR)/risk.pid)"
+	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(AGENT_JAR) > $(LOG_DIR)/agent.log 2>&1 & echo $$! > $(PID_DIR)/agent.pid
+	@echo "  启动 agent-service     (4116)，PID $$(cat $(PID_DIR)/agent.pid)"
 	@env -u SERVER__PORT -u SERVER_PORT nohup $(JAVA) $(JAVA_OPTS) -jar $(GW_JAR) > $(LOG_DIR)/gateway.log 2>&1 & echo $$! > $(PID_DIR)/gateway.pid
 	@echo "  启动 gateway-service   (4110)，PID $$(cat $(PID_DIR)/gateway.pid)"
 	@echo "等待业务服务就绪..."
@@ -145,7 +153,7 @@ dev: ## 重新编译并后台启动（改码后用）
 
 stop: ## 停止全部后台服务（含前端）
 	@echo "停止服务..."
-	@for s in eureka config auth abac document audit gateway; do \
+	@for s in eureka config auth abac document audit risk agent gateway; do \
 	   if [ -f $(PID_DIR)/$$s.pid ]; then kill $$(cat $(PID_DIR)/$$s.pid) 2>/dev/null || true; rm -f $(PID_DIR)/$$s.pid; fi; \
 	 done
 	@pkill -f "eureka-server-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
@@ -154,6 +162,8 @@ stop: ## 停止全部后台服务（含前端）
 	@pkill -f "abac-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
 	@pkill -f "document-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
 	@pkill -f "audit-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
+	@pkill -f "risk-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
+	@pkill -f "agent-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
 	@pkill -f "gateway-service-0.0.1-SNAPSHOT.jar" 2>/dev/null || true
 	@if [ "$(WITH_WEB)" = "1" ]; then $(SUBMAKE) --no-print-directory web-stop; fi
 	@echo "已停止。"
@@ -215,7 +225,7 @@ web-killport: ## 强制释放前端端口（杀掉占用 WEB_PORT 的任意进�
 web-restart: web-stop web-start ## 重启前端
 
 status: ## 检查七个后端服务 + 前端的健康/可达状态
-	@for spec in "8762 GET /eureka/apps" "8889 GET /actuator/health" "4110 GET /health" "4111 POST /api/login" "4112 GET /api/policies" "4113 GET /api/documents" "4114 GET /api/audit" "$(WEB_PORT) GET /login"; do \
+	@for spec in "8762 GET /eureka/apps" "8889 GET /actuator/health" "4110 GET /health" "4111 POST /api/login" "4112 GET /api/policies" "4113 GET /api/documents" "4114 GET /api/audit" "4115 GET /api/trades/reviews" "4116 GET /api/agent/reviews" "$(WEB_PORT) GET /login"; do \
 	   port=$$(echo $$spec | cut -d' ' -f1); \
 	   method=$$(echo $$spec | cut -d' ' -f2); \
 	   path=$$(echo $$spec | cut -d' ' -f3); \
