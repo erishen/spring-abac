@@ -259,6 +259,108 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: risk-service
+  namespace: abac-demo
+  labels:
+    app: risk-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-service
+  template:
+    metadata:
+      labels:
+        app: risk-service
+    spec:
+      containers:
+        - name: risk-service
+          image: spring-abac/risk-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4115
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: risk-service
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: risk-service
+  ports:
+    - port: 4115
+      targetPort: 4115
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-service
+  namespace: abac-demo
+  labels:
+    app: agent-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-service
+  template:
+    metadata:
+      labels:
+        app: agent-service
+    spec:
+      containers:
+        - name: agent-service
+          image: spring-abac/agent-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4116
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: http://eureka-server:8762/eureka
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: agent-service
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "640Mi", cpu: "800m" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-service
+  namespace: abac-demo
+spec:
+  selector:
+    app: agent-service
+  ports:
+    - port: 4116
+      targetPort: 4116
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: audit-service
   namespace: abac-demo
   labels:
