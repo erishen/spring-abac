@@ -266,8 +266,8 @@ export default function GlossaryPanel() {
             <tr>
               <th style={{ width: "8%" }}>策略</th>
               <th style={{ width: "8%" }}>效果</th>
-              <th style={{ width: "13%" }}>作用域</th>
-              <th style={{ width: "55%" }}>条件（SpEL）</th>
+              <th style={{ width: "18%" }}>作用域</th>
+              <th style={{ width: "50%" }}>条件（SpEL）</th>
               <th style={{ width: "8%" }}>优先级</th>
             </tr>
           </thead>
