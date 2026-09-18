@@ -217,3 +217,6 @@ The database is an H2 file DB with `ddl-auto: create` (rebuilt on every startup)
 Production would replace these: **secret into a key management service, policies into a dedicated store with
 versioning and approval, PDP with decision caching and batch endpoints, attribute sources wired to a real
 directory service and business DB**.
+
+## Related Articles
+- [spring-abac: An ABAC Microservice Walkthrough](https://erishen.cn/spring_abac-en/)

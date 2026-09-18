@@ -208,3 +208,6 @@ spring-abac/
 数据库用 H2 文件库且 `ddl-auto: create`（每次启动重建）。
 生产化需要换掉这些：**密钥进密钥管理服务、策略进独立存储并加版本与审批、
 PDP 加决策缓存与批量接口、属性源接真实目录服务与业务库**。
+
+## 相关文章
+- [spring-abac：属性化授权（ABAC）微服务拆解](https://erishen.cn/spring_abac/)
